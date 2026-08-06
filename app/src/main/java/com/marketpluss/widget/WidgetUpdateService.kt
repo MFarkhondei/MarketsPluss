@@ -30,6 +30,7 @@ class WidgetUpdateService : Service() {
             try {
                 WidgetRenderer.fetchAndApply(applicationContext)
             } finally {
+                UpdateScheduler.scheduleNext(applicationContext)
                 stopSelf()
             }
         }
