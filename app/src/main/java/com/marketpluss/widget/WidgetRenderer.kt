@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.view.View
 import android.widget.RemoteViews
 import com.google.gson.Gson
 
@@ -20,6 +21,11 @@ object WidgetRenderer {
 
     private const val ROW_COUNT = 11
 
+    private val rowIds = intArrayOf(
+        R.id.row_0, R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4,
+        R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9,
+        R.id.row_10
+    )
     private val nameIds = intArrayOf(
         R.id.iv_name_0, R.id.iv_name_1, R.id.iv_name_2, R.id.iv_name_3, R.id.iv_name_4,
         R.id.iv_name_5, R.id.iv_name_6, R.id.iv_name_7, R.id.iv_name_8, R.id.iv_name_9,
@@ -84,20 +90,24 @@ object WidgetRenderer {
         val app = ctx.applicationContext
         val mgr = AppWidgetManager.getInstance(app)
 
-        // Static/shared bitmaps: rendered once and reused across every widget instance.
-        val titleBmp = BitmapTextRenderer.render(app, app.getString(R.string.widget_name), 16f, GOLD, bold = true, maxWidthDp = 160f)
-        val colNameBmp = BitmapTextRenderer.render(app, app.getString(R.string.col_name), 12f, GOLD, bold = true)
-        val colValueBmp = BitmapTextRenderer.render(app, app.getString(R.string.col_value), 12f, SECONDARY, bold = true)
-        val colChangeBmp = BitmapTextRenderer.render(app, app.getString(R.string.col_change), 12f, SECONDARY, bold = true)
+        val titleBmp = BitmapTextRenderer.render(app, app.getString(R.string.widget_name), 15f, GOLD, bold = true, maxWidthDp = 150f)
+        val colNameBmp = BitmapTextRenderer.render(app, app.getString(R.string.col_name), 11f, GOLD, bold = true, maxWidthDp = 110f)
+        val colValueBmp = BitmapTextRenderer.render(app, app.getString(R.string.col_value), 11f, SECONDARY, bold = true, maxWidthDp = 90f, alignStart = false)
+        val colChangeBmp = BitmapTextRenderer.render(app, app.getString(R.string.col_change), 11f, SECONDARY, bold = true, maxWidthDp = 80f, alignStart = false)
         val stamp = if (offline) "آفلاین · ${snap.updatedAt}" else snap.updatedAt
-        val updatedBmp = BitmapTextRenderer.render(app, stamp, 11f, MUTED, maxWidthDp = 140f)
+        val updatedBmp = BitmapTextRenderer.render(app, stamp, 10f, MUTED, maxWidthDp = 120f)
 
         val rows = snap.items.take(ROW_COUNT).map { item ->
-            val nameBmp = BitmapTextRenderer.render(app, item.name, 12f, PRIMARY, bold = true, maxWidthDp = 130f, maxLines = 2)
-            val valueBmp = BitmapTextRenderer.render(
-                app, NumberUtils.format(item.value, item.formatDecimals), 12f, PRIMARY, bold = true, maxWidthDp = 100f
+            val nameBmp = BitmapTextRenderer.render(
+                app, item.name, 12f, PRIMARY, bold = true, maxWidthDp = 120f, maxLines = 2
             )
-            val unitBmp = BitmapTextRenderer.render(app, item.unit, 10f, MUTED, maxWidthDp = 100f)
+            val valueBmp = BitmapTextRenderer.render(
+                app, NumberUtils.format(item.value, item.formatDecimals),
+                12f, PRIMARY, bold = true, maxWidthDp = 100f, alignStart = false
+            )
+            val unitBmp = BitmapTextRenderer.render(
+                app, item.unit.ifBlank { " " }, 9f, MUTED, maxWidthDp = 100f, alignStart = false
+            )
             val arrow = when {
                 item.changePercent > 0 -> " ↑"
                 item.changePercent < 0 -> " ↓"
@@ -109,7 +119,8 @@ object WidgetRenderer {
                 else -> MUTED
             }
             val changeBmp = BitmapTextRenderer.render(
-                app, NumberUtils.formatChange(item.changePercent) + arrow, 12f, changeColor, bold = true, maxWidthDp = 90f
+                app, NumberUtils.formatChange(item.changePercent) + arrow,
+                11f, changeColor, bold = true, maxWidthDp = 85f, alignStart = false
             )
             RowBitmaps(nameBmp, valueBmp, unitBmp, changeBmp)
         }
@@ -123,18 +134,22 @@ object WidgetRenderer {
             views.setImageViewBitmap(R.id.iv_col_change, colChangeBmp)
 
             rows.forEachIndexed { i, row ->
+                views.setViewVisibility(rowIds[i], View.VISIBLE)
                 views.setImageViewBitmap(nameIds[i], row.name)
                 views.setImageViewBitmap(valueIds[i], row.value)
                 views.setImageViewBitmap(unitIds[i], row.unit)
                 views.setImageViewBitmap(changeIds[i], row.change)
-                views.setViewVisibility(nameIds[i], android.view.View.VISIBLE)
+                views.setViewVisibility(nameIds[i], View.VISIBLE)
+                views.setViewVisibility(valueIds[i], View.VISIBLE)
+                views.setViewVisibility(unitIds[i], View.VISIBLE)
+                views.setViewVisibility(changeIds[i], View.VISIBLE)
             }
-            // Hide any unused trailing rows (in case fewer than ROW_COUNT items come back).
             for (i in rows.size until ROW_COUNT) {
-                views.setViewVisibility(nameIds[i], android.view.View.INVISIBLE)
-                views.setViewVisibility(valueIds[i], android.view.View.INVISIBLE)
-                views.setViewVisibility(unitIds[i], android.view.View.INVISIBLE)
-                views.setViewVisibility(changeIds[i], android.view.View.INVISIBLE)
+                views.setViewVisibility(rowIds[i], View.GONE)
+                views.setViewVisibility(nameIds[i], View.GONE)
+                views.setViewVisibility(valueIds[i], View.GONE)
+                views.setViewVisibility(unitIds[i], View.GONE)
+                views.setViewVisibility(changeIds[i], View.GONE)
             }
 
             mgr.updateAppWidget(id, views)
@@ -144,8 +159,8 @@ object WidgetRenderer {
     private fun showError(ctx: Context, msg: String) {
         val app = ctx.applicationContext
         val mgr = AppWidgetManager.getInstance(app)
-        val titleBmp = BitmapTextRenderer.render(app, app.getString(R.string.widget_name), 16f, GOLD, bold = true, maxWidthDp = 160f)
-        val errBmp = BitmapTextRenderer.render(app, msg.take(30), 11f, NEG, maxWidthDp = 140f)
+        val titleBmp = BitmapTextRenderer.render(app, app.getString(R.string.widget_name), 15f, GOLD, bold = true, maxWidthDp = 150f)
+        val errBmp = BitmapTextRenderer.render(app, msg.take(40), 11f, NEG, maxWidthDp = 140f)
         for (id in allIds(app)) {
             val views = baseViews(app, id)
             views.setImageViewBitmap(R.id.iv_app_title, titleBmp)
@@ -154,10 +169,6 @@ object WidgetRenderer {
         }
     }
 
-    /**
-     * Whole widget body refreshes the data on tap; the config/settings screen is only
-     * reachable from the home-screen launcher icon, never from tapping the widget itself.
-     */
     private fun baseViews(ctx: Context, widgetId: Int): RemoteViews {
         val views = RemoteViews(ctx.packageName, R.layout.widget_layout)
         val refresh = Intent(ctx, SilentRefreshActivity::class.java).apply {
