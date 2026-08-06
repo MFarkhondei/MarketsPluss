@@ -12,24 +12,40 @@ import com.google.gson.Gson
 
 object WidgetRenderer {
     private val gson = Gson()
+
+    // رنگ‌ها دقیقاً مثل TradePluss
+    private val GOLD = Color.parseColor("#F5C542")
+    private val WHITE = Color.parseColor("#F8FAFC")
+    private val MUTED = Color.parseColor("#A8B2C1")
+    private val SECONDARY = Color.parseColor("#94A3B8")
     private val POS = Color.parseColor("#34D399")
     private val NEG = Color.parseColor("#F87171")
-    private val MUTED = Color.parseColor("#94A3B8")
-    private val GOLD = Color.parseColor("#F5C542")
 
+    /** اندازه یکسان هدر جدول + نام/مقدار/درصد — مثل TradePluss */
+    private const val TABLE_SP = 13f
     private const val ROW_COUNT = 10
 
-    private val rowIds = intArrayOf(
-        R.id.row_0, R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4,
-        R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9
+    private data class RowSlot(
+        val row: Int,
+        val name: Int,
+        val value: Int,
+        val unit: Int,
+        val pct: Int,
+        val badge: Int,
+        val div: Int
     )
-    private val rowImageIds = intArrayOf(
-        R.id.iv_row_0, R.id.iv_row_1, R.id.iv_row_2, R.id.iv_row_3, R.id.iv_row_4,
-        R.id.iv_row_5, R.id.iv_row_6, R.id.iv_row_7, R.id.iv_row_8, R.id.iv_row_9
-    )
-    private val dividerIds = intArrayOf(
-        R.id.div_0, R.id.div_1, R.id.div_2, R.id.div_3, R.id.div_4,
-        R.id.div_5, R.id.div_6, R.id.div_7, R.id.div_8, R.id.div_9
+
+    private val slots = arrayOf(
+        RowSlot(R.id.row_0, R.id.iv_name_0, R.id.iv_value_0, R.id.iv_unit_0, R.id.iv_pct_0, R.id.badge_0, R.id.div_0),
+        RowSlot(R.id.row_1, R.id.iv_name_1, R.id.iv_value_1, R.id.iv_unit_1, R.id.iv_pct_1, R.id.badge_1, R.id.div_1),
+        RowSlot(R.id.row_2, R.id.iv_name_2, R.id.iv_value_2, R.id.iv_unit_2, R.id.iv_pct_2, R.id.badge_2, R.id.div_2),
+        RowSlot(R.id.row_3, R.id.iv_name_3, R.id.iv_value_3, R.id.iv_unit_3, R.id.iv_pct_3, R.id.badge_3, R.id.div_3),
+        RowSlot(R.id.row_4, R.id.iv_name_4, R.id.iv_value_4, R.id.iv_unit_4, R.id.iv_pct_4, R.id.badge_4, R.id.div_4),
+        RowSlot(R.id.row_5, R.id.iv_name_5, R.id.iv_value_5, R.id.iv_unit_5, R.id.iv_pct_5, R.id.badge_5, R.id.div_5),
+        RowSlot(R.id.row_6, R.id.iv_name_6, R.id.iv_value_6, R.id.iv_unit_6, R.id.iv_pct_6, R.id.badge_6, R.id.div_6),
+        RowSlot(R.id.row_7, R.id.iv_name_7, R.id.iv_value_7, R.id.iv_unit_7, R.id.iv_pct_7, R.id.badge_7, R.id.div_7),
+        RowSlot(R.id.row_8, R.id.iv_name_8, R.id.iv_value_8, R.id.iv_unit_8, R.id.iv_pct_8, R.id.badge_8, R.id.div_8),
+        RowSlot(R.id.row_9, R.id.iv_name_9, R.id.iv_value_9, R.id.iv_unit_9, R.id.iv_pct_9, R.id.badge_9, R.id.div_9)
     )
 
     fun allIds(ctx: Context): IntArray {
@@ -64,13 +80,6 @@ object WidgetRenderer {
         }
     }
 
-    private fun widgetWidthDp(ctx: Context): Float {
-        val dm = ctx.resources.displayMetrics
-        val screenDp = dm.widthPixels / dm.density
-        return (screenDp * 0.92f).coerceIn(260f, 400f)
-    }
-
-    /** فیلتر حباب از کش قدیمی + حداکثر ROW_COUNT ردیف */
     private fun filteredItems(snap: MarketSnapshot): List<MarketItem> {
         return snap.items
             .filterNot { it.name.contains("حباب") }
@@ -80,86 +89,109 @@ object WidgetRenderer {
     private fun apply(ctx: Context, snap: MarketSnapshot, offline: Boolean) {
         val app = ctx.applicationContext
         val mgr = AppWidgetManager.getInstance(app)
-        val widthDp = widgetWidthDp(app)
-
-        // عنوان کامل بدون truncate، سمت چپ
-        val titleBmp = WidgetText.render(
-            app, app.getString(R.string.widget_name), 16f, GOLD,
-            bold = true, maxWidthDp = 220f, ellipsize = false
-        )
-        val stamp = if (offline) "آفلاین · ${snap.updatedAt}" else snap.updatedAt
-        val updatedBmp = WidgetText.render(app, stamp, 10f, MUTED, maxWidthDp = 100f)
-
-        val headerBmp = WidgetText.renderHeader(
-            app,
-            app.getString(R.string.col_name),
-            app.getString(R.string.col_value),
-            app.getString(R.string.col_change),
-            widthDp = widthDp
-        )
-
         val items = filteredItems(snap)
-        val rowBmps = items.map { item ->
-            val arrow = when {
-                item.changePercent > 0 -> " ↑"
-                item.changePercent < 0 -> " ↓"
-                else -> ""
-            }
-            val changeColor = when {
-                item.changePercent > 0 -> POS
-                item.changePercent < 0 -> NEG
-                else -> MUTED
-            }
-            WidgetText.renderRow(
-                app,
-                name = item.name,
-                value = NumberUtils.format(item.value, item.formatDecimals),
-                unit = item.unit,
-                change = NumberUtils.formatChange(item.changePercent) + arrow,
-                changeColor = changeColor,
-                widthDp = widthDp
-            )
-        }
 
         for (id in allIds(app)) {
             val views = baseViews(app, id)
-            views.setImageViewBitmap(R.id.iv_app_title, titleBmp)
-            views.setImageViewBitmap(R.id.iv_updated, updatedBmp)
-            views.setImageViewBitmap(R.id.iv_header, headerBmp)
 
-            rowBmps.forEachIndexed { i, bmp ->
-                views.setViewVisibility(rowIds[i], View.VISIBLE)
-                views.setViewVisibility(dividerIds[i], View.VISIBLE)
-                views.setImageViewBitmap(rowImageIds[i], bmp)
+            val stamp = if (offline) "آفلاین · ${snap.updatedAt}" else snap.updatedAt
+            FontHelper.setTextBitmap(views, app, R.id.iv_updated_at, stamp, 11f, MUTED)
+
+            items.forEachIndexed { i, item ->
+                val slot = slots[i]
+                views.setViewVisibility(slot.row, View.VISIBLE)
+                views.setViewVisibility(slot.div, View.VISIBLE)
+                bindRow(app, views, slot, item)
             }
-            for (i in rowBmps.size until ROW_COUNT) {
-                views.setViewVisibility(rowIds[i], View.GONE)
-                views.setViewVisibility(dividerIds[i], View.GONE)
+            for (i in items.size until ROW_COUNT) {
+                views.setViewVisibility(slots[i].row, View.GONE)
+                views.setViewVisibility(slots[i].div, View.GONE)
             }
 
             mgr.updateAppWidget(id, views)
         }
     }
 
+    private fun bindRow(ctx: Context, views: RemoteViews, slot: RowSlot, item: MarketItem) {
+        val positive = item.changePercent > 0
+        val neutral = item.changePercent == 0.0
+        val pctColor = when {
+            positive -> POS
+            neutral -> MUTED
+            else -> NEG
+        }
+        val arrow = when {
+            positive -> " ↑"
+            item.changePercent < 0 -> " ↓"
+            else -> ""
+        }
+
+        FontHelper.setTextBitmap(
+            views, ctx, slot.name, item.name, TABLE_SP, WHITE,
+            bold = true, maxWidthDp = 140f
+        )
+        FontHelper.setTextBitmap(
+            views, ctx, slot.value,
+            NumberUtils.format(item.value, item.formatDecimals),
+            TABLE_SP, WHITE, bold = true, align = FontHelper.Align.CENTER
+        )
+        FontHelper.setTextBitmap(
+            views, ctx, slot.unit,
+            item.unit.ifBlank { " " },
+            11f, MUTED, align = FontHelper.Align.CENTER
+        )
+        FontHelper.setTextBitmap(
+            views, ctx, slot.pct,
+            NumberUtils.formatChange(item.changePercent) + arrow,
+            TABLE_SP, pctColor, bold = true, align = FontHelper.Align.CENTER
+        )
+
+        val badgeRes = when {
+            positive -> R.drawable.bg_badge_pos
+            neutral -> R.drawable.bg_badge_pos
+            else -> R.drawable.bg_badge_neg
+        }
+        views.setInt(slot.badge, "setBackgroundResource", badgeRes)
+    }
+
     private fun showError(ctx: Context, msg: String) {
         val app = ctx.applicationContext
         val mgr = AppWidgetManager.getInstance(app)
-        val titleBmp = WidgetText.render(
-            app, app.getString(R.string.widget_name), 16f, GOLD,
-            bold = true, maxWidthDp = 220f, ellipsize = false
-        )
-        val errBmp = WidgetText.render(app, msg.take(40), 11f, NEG, maxWidthDp = 160f)
         for (id in allIds(app)) {
             val views = baseViews(app, id)
-            views.setImageViewBitmap(R.id.iv_app_title, titleBmp)
-            views.setImageViewBitmap(R.id.iv_updated, errBmp)
+            FontHelper.setTextBitmap(views, app, R.id.iv_updated_at, msg.take(40), 11f, NEG)
             mgr.updateAppWidget(id, views)
         }
     }
 
     private fun baseViews(ctx: Context, widgetId: Int): RemoteViews {
         val views = RemoteViews(ctx.packageName, R.layout.widget_layout)
-        // به‌روزرسانی بی‌صدا از طریق Broadcast → Service (بدون Activity و بدون کادر سیاه)
+
+        // عنوان ۱۸sp طلایی bold — سمت چپ — مثل TradePluss
+        FontHelper.setTextBitmap(
+            views, ctx, R.id.iv_title,
+            ctx.getString(R.string.widget_name),
+            18f, GOLD, bold = true
+        )
+
+        // هدر جدول ۱۳sp muted bold — مثل TradePluss
+        FontHelper.setTextBitmap(
+            views, ctx, R.id.iv_header_name,
+            ctx.getString(R.string.col_name),
+            TABLE_SP, MUTED, bold = true
+        )
+        FontHelper.setTextBitmap(
+            views, ctx, R.id.iv_header_value,
+            ctx.getString(R.string.col_value),
+            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER
+        )
+        FontHelper.setTextBitmap(
+            views, ctx, R.id.iv_header_pct,
+            ctx.getString(R.string.col_change),
+            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER
+        )
+
+        // رفرش بی‌صدا: Broadcast → Service
         val refresh = Intent(ctx, MarketWidgetProvider::class.java).apply {
             action = MarketWidgetProvider.ACTION_REFRESH
         }
