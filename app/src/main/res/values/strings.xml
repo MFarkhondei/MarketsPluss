@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">بازار ثروتمندی</string>
+    <string name="widget_name">بازار لحظه‌ای</string>
+    <string name="widget_description">قیمت دلار، طلا، سکه، رمزارز و شاخص</string>
+    <string name="col_name">نام</string>
+    <string name="col_value">مقدار</string>
+    <string name="col_change">تغییر %</string>
+    <string name="refresh">بروزرسانی</string>
+    <string name="config_title">تنظیمات ویجت بازار</string>
+    <string name="refresh_interval">فاصله به‌روزرسانی خودکار</string>
+    <string name="save">ذخیره</string>
+    <string name="note">داده‌ها از منابع بازار ایران (هم‌تراز دیده‌بان ثروتمندی) دریافت می‌شود.</string>
+    <string-array name="refresh_interval_labels">
+        <item>هر ۱۵ دقیقه</item>
+        <item>هر ۳۰ دقیقه</item>
+        <item>هر ۱ ساعت</item>
+        <item>هر ۲ ساعت</item>
+        <item>فقط دستی</item>
+    </string-array>
+</resources>
