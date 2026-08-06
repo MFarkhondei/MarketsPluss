@@ -17,24 +17,37 @@ class ConfigActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_config)
 
-        val spinner = findViewById<Spinner>(R.id.spinner_interval)
+        val spinnerInterval = findViewById<Spinner>(R.id.spinner_interval)
+        val spinnerFont = findViewById<Spinner>(R.id.spinner_font)
         val btnSave = findViewById<MaterialButton>(R.id.btn_save)
         val btnRefresh = findViewById<MaterialButton>(R.id.btn_refresh_now)
         val tvStatus = findViewById<TextView>(R.id.tv_status)
 
-        val labels = resources.getStringArray(R.array.refresh_interval_labels)
-        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
-        val cur = Prefs.getIntervalMin(this)
-        val idx = Prefs.INTERVAL_OPTIONS.indexOf(cur).let { if (it >= 0) it else 1 }
-        spinner.setSelection(idx)
+        val intervalLabels = resources.getStringArray(R.array.refresh_interval_labels)
+        spinnerInterval.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, intervalLabels)
+        val curInterval = Prefs.getIntervalMin(this)
+        val intervalIdx = Prefs.INTERVAL_OPTIONS.indexOf(curInterval).let { if (it >= 0) it else 1 }
+        spinnerInterval.setSelection(intervalIdx)
+
+        val fontLabels = resources.getStringArray(R.array.font_size_labels)
+        spinnerFont.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, fontLabels)
+        spinnerFont.setSelection(Prefs.fontOptionIndex(this))
 
         btnSave.setOnClickListener {
-            val interval = Prefs.INTERVAL_OPTIONS.getOrElse(spinner.selectedItemPosition) { 30 }
+            val interval = Prefs.INTERVAL_OPTIONS.getOrElse(spinnerInterval.selectedItemPosition) { 30 }
+            val fontSp = Prefs.FONT_OPTIONS.getOrElse(spinnerFont.selectedItemPosition) {
+                Prefs.FONT_DEFAULT
+            }
             Prefs.setIntervalMin(this, interval)
+            Prefs.setFontSp(this, fontSp)
             UpdateScheduler.schedule(this)
+            // اعمال فوری فونت جدید روی ویجت
+            WidgetRenderer.applyCache(this)
             Toast.makeText(this, "ذخیره شد", Toast.LENGTH_SHORT).show()
             val t = if (interval > 0) "هر $interval دقیقه" else "فقط دستی"
-            tvStatus.text = "✅ ذخیره شد · $t"
+            tvStatus.text = "✅ ذخیره شد · $t · فونت ${fontSp}sp"
         }
 
         btnRefresh.setOnClickListener {
