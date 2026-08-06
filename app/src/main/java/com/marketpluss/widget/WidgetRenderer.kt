@@ -19,12 +19,18 @@ object WidgetRenderer {
     private val POS = Color.parseColor("#34D399")
     private val NEG = Color.parseColor("#F87171")
 
-    /** عنوان ویجت */
-    private const val TITLE_SP = 16f
-    /** نام / مقدار / درصد — یکسان */
-    private const val TABLE_SP = 13.5f
-    private const val UNIT_SP = 12f
     private const val ROW_COUNT = 10
+
+    private data class FontSizes(val title: Float, val table: Float, val stamp: Float)
+
+    private fun fontSizes(ctx: Context): FontSizes {
+        val table = Prefs.getFontSp(ctx)
+        return FontSizes(
+            title = (table + 2.5f).coerceIn(14f, 20f),
+            table = table,
+            stamp = (table - 2.5f).coerceAtLeast(10f)
+        )
+    }
 
     private data class RowSlot(
         val row: Int,
@@ -94,17 +100,18 @@ object WidgetRenderer {
         val mgr = AppWidgetManager.getInstance(app)
         val items = filteredItems(snap)
 
+        val fs = fontSizes(app)
         for (id in allIds(app)) {
-            val views = baseViews(app, id)
+            val views = baseViews(app, id, fs)
 
             val stamp = if (offline) "آفلاین · ${snap.updatedAt}" else snap.updatedAt
-            FontHelper.setTextBitmap(views, app, R.id.iv_updated_at, stamp, 11f, MUTED)
+            FontHelper.setTextBitmap(views, app, R.id.iv_updated_at, stamp, fs.stamp, MUTED)
 
             items.forEachIndexed { i, item ->
                 val slot = slots[i]
                 views.setViewVisibility(slot.row, View.VISIBLE)
                 views.setViewVisibility(slot.div, View.VISIBLE)
-                bindRow(app, views, slot, item)
+                bindRow(app, views, slot, item, fs)
             }
             for (i in items.size until ROW_COUNT) {
                 views.setViewVisibility(slots[i].row, View.GONE)
@@ -115,7 +122,7 @@ object WidgetRenderer {
         }
     }
 
-    private fun bindRow(ctx: Context, views: RemoteViews, slot: RowSlot, item: MarketItem) {
+    private fun bindRow(ctx: Context, views: RemoteViews, slot: RowSlot, item: MarketItem, fs: FontSizes) {
         val positive = item.changePercent > 0
         val neutral = item.changePercent == 0.0
         val pctColor = when {
@@ -130,7 +137,7 @@ object WidgetRenderer {
         }
 
         FontHelper.setTextBitmap(
-            views, ctx, slot.name, item.name, TABLE_SP, WHITE,
+            views, ctx, slot.name, item.name, fs.table, WHITE,
             bold = true, maxWidthDp = 140f
         )
         val valueText = NumberUtils.format(item.value, item.formatDecimals)
@@ -138,7 +145,7 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, slot.value,
             valueWithUnit,
-            TABLE_SP, WHITE, bold = true, align = FontHelper.Align.END,
+            fs.table, WHITE, bold = true, align = FontHelper.Align.END,
             maxWidthDp = 130f
         )
         // واحد کنار مبلغ است؛ ImageView واحد مخفی تا فاصله عمودی نباشد
@@ -146,7 +153,7 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
-            TABLE_SP, pctColor, bold = true, align = FontHelper.Align.CENTER,
+            fs.table, pctColor, bold = true, align = FontHelper.Align.CENTER,
             maxWidthDp = 80f
         )
 
@@ -161,36 +168,37 @@ object WidgetRenderer {
     private fun showError(ctx: Context, msg: String) {
         val app = ctx.applicationContext
         val mgr = AppWidgetManager.getInstance(app)
+        val fs = fontSizes(app)
         for (id in allIds(app)) {
-            val views = baseViews(app, id)
-            FontHelper.setTextBitmap(views, app, R.id.iv_updated_at, msg.take(40), 11f, NEG)
+            val views = baseViews(app, id, fs)
+            FontHelper.setTextBitmap(views, app, R.id.iv_updated_at, msg.take(40), fs.stamp, NEG)
             mgr.updateAppWidget(id, views)
         }
     }
 
-    private fun baseViews(ctx: Context, widgetId: Int): RemoteViews {
+    private fun baseViews(ctx: Context, widgetId: Int, fs: FontSizes): RemoteViews {
         val views = RemoteViews(ctx.packageName, R.layout.widget_layout)
 
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_title,
             ctx.getString(R.string.widget_name),
-            TITLE_SP, GOLD, bold = true
+            fs.title, GOLD, bold = true
         )
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_name,
             ctx.getString(R.string.col_name),
-            TABLE_SP, MUTED, bold = true
+            fs.table, MUTED, bold = true
         )
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_value,
             ctx.getString(R.string.col_value),
-            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.END,
+            fs.table, MUTED, bold = true, align = FontHelper.Align.END,
             maxWidthDp = 130f
         )
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_pct,
             ctx.getString(R.string.col_change),
-            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER,
+            fs.table, MUTED, bold = true, align = FontHelper.Align.CENTER,
             maxWidthDp = 80f
         )
 
