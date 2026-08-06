@@ -31,7 +31,13 @@
 ./gradlew assembleDebug
 ```
 
-یا GitHub Actions → artifact `servatmandi-widget-apk`.
+خروجی: `app/build/outputs/apk/debug/app-debug.apk`
+
+### GitHub Actions
+
+با هر push به `main`/`master`، یا دستی از تب **Actions** → **Build APK** → **Run workflow**، فایل APK به‌صورت artifact با نام **`servatmandi-widget-apk`** ساخته می‌شود.
+
+بعد از اتمام workflow: Actions → run مربوطه → Artifacts → دانلود `servatmandi-widget-apk`.
 
 ## استفاده
 
