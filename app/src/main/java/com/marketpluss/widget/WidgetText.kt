@@ -14,9 +14,15 @@ import android.util.TypedValue
 import androidx.core.content.res.ResourcesCompat
 
 /**
- * RemoteViews on many launchers (esp. Samsung) ignores custom android:fontFamily on TextViews.
- * Draw text with Vazir Typeface onto a Bitmap and set via setImageViewBitmap.
- * Fonts from res/font: vazirmatn_regular, vazirmatn_bold.
+ * RemoteViews روی خیلی از لانچرها (به‌خصوص سامسونگ) فونت سفارشی
+ * `android:fontFamily` را روی TextView اعمال نمی‌کند.
+ *
+ * راه حل: متن را با Typeface وزیر روی Bitmap می‌کشیم و با
+ * [android.widget.RemoteViews.setImageViewBitmap] نمایش می‌دهیم.
+ *
+ * فونت‌ها از `res/font` خوانده می‌شوند:
+ * - [R.font.vazirmatn_regular]
+ * - [R.font.vazirmatn_bold]
  */
 object WidgetText {
     @Volatile private var regular: Typeface? = null
@@ -29,7 +35,8 @@ object WidgetText {
             val again = if (isBold) bold else regular
             if (again != null) return again
             val id = if (isBold) R.font.vazirmatn_bold else R.font.vazirmatn_regular
-            val tf = ResourcesCompat.getFont(ctx.applicationContext, id) ?: Typeface.DEFAULT
+            val tf = ResourcesCompat.getFont(ctx.applicationContext, id)
+                ?: Typeface.DEFAULT
             if (isBold) bold = tf else regular = tf
             return tf
         }
@@ -52,6 +59,9 @@ object WidgetText {
         return false
     }
 
+    /**
+     * یک تکه متن را با فونت وزیر به Bitmap تبدیل می‌کند.
+     */
     fun render(
         ctx: Context,
         text: String,
@@ -110,7 +120,10 @@ object WidgetText {
         return bmp
     }
 
-    /** One full table row (name | value+unit | change) as a single Bitmap — keeps columns aligned. */
+    /**
+     * یک ردیف کامل جدول (نام | مقدار+واحد | تغییر) به صورت یک Bitmap واحد
+     * تا ستون‌ها همیشه هم‌تراز بمانند.
+     */
     fun renderRow(
         ctx: Context,
         name: String,
@@ -125,6 +138,7 @@ object WidgetText {
     ): Bitmap {
         val metrics = ctx.resources.displayMetrics
         val totalW = dp(ctx, widthDp).toInt().coerceAtLeast(200)
+        // وزن ستون‌ها (RTL visual): name | value | change  ≈ 1.35 : 1.15 : 0.85
         val nameW = (totalW * 1.35f / 3.35f).toInt()
         val valueW = (totalW * 1.15f / 3.35f).toInt()
         val changeW = totalW - nameW - valueW
@@ -143,13 +157,14 @@ object WidgetText {
         val changeLayout = makeLayout(change.ifBlank { " " }, changePaint, changeW - dp(ctx, 4f).toInt(), maxLines = 1, center = true, rtl = false)
 
         val valueBlockH = valueLayout.height + gap + unitLayout.height
-        val contentH = maxOf(nameLayout.height, valueBlockH, changeLayout.height)
+        val contentH = maxOf(nameLayout.height.toFloat(), valueBlockH, changeLayout.height.toFloat())
         val totalH = (contentH + padV * 2).toInt().coerceAtLeast(1)
 
         val bmp = Bitmap.createBitmap(totalW, totalH, Bitmap.Config.ARGB_8888)
         bmp.density = metrics.densityDpi
         val canvas = Canvas(bmp)
 
+        // RTL: name on the right, change on the left
         val nameLeft = totalW - nameW
         val valueLeft = changeW
         val changeLeft = 0
@@ -177,6 +192,7 @@ object WidgetText {
         return bmp
     }
 
+    /** هدر جدول (نام / مقدار / تغییر %) */
     fun renderHeader(
         ctx: Context,
         name: String,
