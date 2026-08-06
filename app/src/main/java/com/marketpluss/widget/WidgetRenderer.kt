@@ -148,7 +148,6 @@ object WidgetRenderer {
             fs.table, WHITE, bold = true, align = FontHelper.Align.END,
             maxWidthDp = 130f
         )
-        // واحد کنار مبلغ است؛ ImageView واحد مخفی تا فاصله عمودی نباشد
         views.setViewVisibility(slot.unit, View.GONE)
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
@@ -209,8 +208,21 @@ object WidgetRenderer {
             ctx, 100 + widgetId, refresh,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.btn_refresh, pi)
+        // کلیک روی هر نقطه ویجت → بروزرسانی
         views.setOnClickPendingIntent(R.id.widget_root, pi)
+        views.setOnClickPendingIntent(R.id.btn_refresh, pi)
+        views.setOnClickPendingIntent(R.id.iv_title, pi)
+        views.setOnClickPendingIntent(R.id.iv_updated_at, pi)
+        views.setOnClickPendingIntent(R.id.iv_header_name, pi)
+        views.setOnClickPendingIntent(R.id.iv_header_value, pi)
+        views.setOnClickPendingIntent(R.id.iv_header_pct, pi)
+        for (slot in slots) {
+            views.setOnClickPendingIntent(slot.row, pi)
+            views.setOnClickPendingIntent(slot.name, pi)
+            views.setOnClickPendingIntent(slot.value, pi)
+            views.setOnClickPendingIntent(slot.pct, pi)
+            views.setOnClickPendingIntent(slot.badge, pi)
+        }
         return views
     }
 }
