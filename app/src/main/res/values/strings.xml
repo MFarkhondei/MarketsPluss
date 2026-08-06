@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">بازار ثروتمندی</string>
-    <string name="widget_name">بازار لحظه‌ای</string>
+    <string name="app_name">مارکت‌پلاس</string>
+    <string name="widget_name">مارکت‌پلاس</string>
     <string name="widget_description">قیمت دلار، طلا، سکه، رمزارز و شاخص</string>
     <string name="col_name">نام</string>
     <string name="col_value">مقدار</string>

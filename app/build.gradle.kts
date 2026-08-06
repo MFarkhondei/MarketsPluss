@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.servatmandi.widget"
+    namespace = "com.marketpluss.widget"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.servatmandi.widget"
+        applicationId = "com.marketpluss.widget"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

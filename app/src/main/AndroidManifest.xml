@@ -13,13 +13,13 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ServatmandiWidget"
+        android:theme="@style/Theme.MarketPluss"
         android:usesCleartextTraffic="true">
 
         <activity
             android:name=".ConfigActivity"
             android:exported="true"
-            android:theme="@style/Theme.ServatmandiWidget">
+            android:theme="@style/Theme.MarketPluss">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -40,7 +40,7 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.appwidget.action.APPWIDGET_ENABLED" />
-                <action android:name="com.servatmandi.widget.ACTION_REFRESH" />
+                <action android:name="com.marketpluss.widget.ACTION_REFRESH" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

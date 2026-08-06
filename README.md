@@ -35,9 +35,9 @@
 
 ### GitHub Actions
 
-با هر push به `main`/`master`، یا دستی از تب **Actions** → **Build APK** → **Run workflow**، فایل APK به‌صورت artifact با نام **`servatmandi-widget-apk`** ساخته می‌شود.
+با هر push به `main`/`master`، یا دستی از تب **Actions** → **Build APK** → **Run workflow**، فایل APK به‌صورت artifact با نام **`marketpluss-apk`** ساخته می‌شود.
 
-بعد از اتمام workflow: Actions → run مربوطه → Artifacts → دانلود `servatmandi-widget-apk`.
+بعد از اتمام workflow: Actions → run مربوطه → Artifacts → دانلود `marketpluss-apk`.
 
 ## استفاده
 

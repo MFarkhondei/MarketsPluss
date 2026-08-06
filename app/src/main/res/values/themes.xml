@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ServatmandiWidget" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.MarketPluss" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent_gold</item>
         <item name="colorPrimaryVariant">@color/bg_dark</item>
         <item name="colorOnPrimary">@color/bg_dark</item>

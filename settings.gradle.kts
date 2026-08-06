@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ServatmandiWidget"
+rootProject.name = "MarketPluss"
 include(":app")
