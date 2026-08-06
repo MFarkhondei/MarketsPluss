@@ -8,6 +8,7 @@ import android.content.Intent
 class MarketWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         WidgetRenderer.applyCache(context)
+        UpdateScheduler.schedule(context)
         WidgetUpdateService.start(context)
     }
 
@@ -22,7 +23,8 @@ class MarketWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == ACTION_REFRESH) {
+        val action = intent.action ?: return
+        if (action == ACTION_REFRESH) {
             WidgetUpdateService.start(context)
         }
     }
