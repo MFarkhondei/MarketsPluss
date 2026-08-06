@@ -74,23 +74,20 @@ object PriceClient {
         // شاخص بورس / دلار (تومان)
         val indexPerDollar = if (dollarToman > 0) bourse / dollarToman else 0.0
 
-        // حباب طلای ۱۸ عیار (تقریبی): اختلاف قیمت بازار با ارزش جهانی
-        // fair ≈ ons * dollarToman * (18/24) / 31.1034768  (هر گرم ۱۸ عیار)
+        // ارزش منصفانه طلای ۱۸ عیار (بدون حباب)
         val fairGold18 = if (ons > 0 && dollarToman > 0) {
             ons * dollarToman * (18.0 / 24.0) / 31.1034768
         } else 0.0
-        val bubbleAbs = gold18Toman - fairGold18
-        val bubblePct = if (fairGold18 > 0) (bubbleAbs / fairGold18) * 100.0 else 0.0
 
         // موج: در TGJU کلید ثابت ندارد — از نزدیک‌ترین صندوق اهرمی/طلا در صورت نبود، صفر
         val moj = price("ime_fund_nahal").takeIf { it > 0 } ?: 0.0
         val mojChg = change("ime_fund_nahal")
 
+        // ردیف «حباب طلای ۱۸ عیار» عمداً حذف شده
         val items = listOf(
             MarketItem("دلار آمریکا", dollarToman, dollarChg, "تومان"),
             MarketItem("انس طلا", ons, onsChg, "دلار", 2),
             MarketItem("طلا ۱۸ عیار", gold18Toman, gold18Chg, "تومان"),
-            MarketItem("حباب طلای ۱۸ عیار", bubbleAbs, bubblePct, "تومان"),
             MarketItem("طلای ۱۸ عیار (بدون حباب)", fairGold18, 0.0, "تومان"),
             MarketItem("سکه امامی", sekeeToman, sekeeChg, "تومان"),
             MarketItem("صندوق عیار", ayar, ayarChg, "تومان"),

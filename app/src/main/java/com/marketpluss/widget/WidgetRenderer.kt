@@ -17,22 +17,19 @@ object WidgetRenderer {
     private val MUTED = Color.parseColor("#94A3B8")
     private val GOLD = Color.parseColor("#F5C542")
 
-    private const val ROW_COUNT = 11
+    private const val ROW_COUNT = 10
 
     private val rowIds = intArrayOf(
         R.id.row_0, R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4,
-        R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9,
-        R.id.row_10
+        R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9
     )
     private val rowImageIds = intArrayOf(
         R.id.iv_row_0, R.id.iv_row_1, R.id.iv_row_2, R.id.iv_row_3, R.id.iv_row_4,
-        R.id.iv_row_5, R.id.iv_row_6, R.id.iv_row_7, R.id.iv_row_8, R.id.iv_row_9,
-        R.id.iv_row_10
+        R.id.iv_row_5, R.id.iv_row_6, R.id.iv_row_7, R.id.iv_row_8, R.id.iv_row_9
     )
     private val dividerIds = intArrayOf(
         R.id.div_0, R.id.div_1, R.id.div_2, R.id.div_3, R.id.div_4,
-        R.id.div_5, R.id.div_6, R.id.div_7, R.id.div_8, R.id.div_9,
-        R.id.div_10
+        R.id.div_5, R.id.div_6, R.id.div_7, R.id.div_8, R.id.div_9
     )
 
     fun allIds(ctx: Context): IntArray {
@@ -73,16 +70,25 @@ object WidgetRenderer {
         return (screenDp * 0.92f).coerceIn(260f, 400f)
     }
 
+    /** فیلتر حباب از کش قدیمی + حداکثر ROW_COUNT ردیف */
+    private fun filteredItems(snap: MarketSnapshot): List<MarketItem> {
+        return snap.items
+            .filterNot { it.name.contains("حباب") }
+            .take(ROW_COUNT)
+    }
+
     private fun apply(ctx: Context, snap: MarketSnapshot, offline: Boolean) {
         val app = ctx.applicationContext
         val mgr = AppWidgetManager.getInstance(app)
         val widthDp = widgetWidthDp(app)
 
+        // عنوان کامل بدون truncate، سمت چپ
         val titleBmp = WidgetText.render(
-            app, app.getString(R.string.widget_name), 15f, GOLD, bold = true, maxWidthDp = 160f
+            app, app.getString(R.string.widget_name), 16f, GOLD,
+            bold = true, maxWidthDp = 220f, ellipsize = false
         )
         val stamp = if (offline) "آفلاین · ${snap.updatedAt}" else snap.updatedAt
-        val updatedBmp = WidgetText.render(app, stamp, 10f, MUTED, maxWidthDp = 120f)
+        val updatedBmp = WidgetText.render(app, stamp, 10f, MUTED, maxWidthDp = 100f)
 
         val headerBmp = WidgetText.renderHeader(
             app,
@@ -92,7 +98,8 @@ object WidgetRenderer {
             widthDp = widthDp
         )
 
-        val rowBmps = snap.items.take(ROW_COUNT).map { item ->
+        val items = filteredItems(snap)
+        val rowBmps = items.map { item ->
             val arrow = when {
                 item.changePercent > 0 -> " ↑"
                 item.changePercent < 0 -> " ↓"
@@ -137,7 +144,10 @@ object WidgetRenderer {
     private fun showError(ctx: Context, msg: String) {
         val app = ctx.applicationContext
         val mgr = AppWidgetManager.getInstance(app)
-        val titleBmp = WidgetText.render(app, app.getString(R.string.widget_name), 15f, GOLD, bold = true, maxWidthDp = 160f)
+        val titleBmp = WidgetText.render(
+            app, app.getString(R.string.widget_name), 16f, GOLD,
+            bold = true, maxWidthDp = 220f, ellipsize = false
+        )
         val errBmp = WidgetText.render(app, msg.take(40), 11f, NEG, maxWidthDp = 160f)
         for (id in allIds(app)) {
             val views = baseViews(app, id)
@@ -149,10 +159,11 @@ object WidgetRenderer {
 
     private fun baseViews(ctx: Context, widgetId: Int): RemoteViews {
         val views = RemoteViews(ctx.packageName, R.layout.widget_layout)
-        val refresh = Intent(ctx, SilentRefreshActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
+        // به‌روزرسانی بی‌صدا از طریق Broadcast → Service (بدون Activity و بدون کادر سیاه)
+        val refresh = Intent(ctx, MarketWidgetProvider::class.java).apply {
+            action = MarketWidgetProvider.ACTION_REFRESH
         }
-        val pi = PendingIntent.getActivity(
+        val pi = PendingIntent.getBroadcast(
             ctx, 100 + widgetId, refresh,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

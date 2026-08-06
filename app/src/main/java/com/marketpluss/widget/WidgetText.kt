@@ -61,6 +61,7 @@ object WidgetText {
 
     /**
      * یک تکه متن را با فونت وزیر به Bitmap تبدیل می‌کند.
+     * @param ellipsize اگر false باشد متن کامل رسم می‌شود (برای عنوان).
      */
     fun render(
         ctx: Context,
@@ -70,7 +71,8 @@ object WidgetText {
         bold: Boolean = false,
         maxWidthDp: Float = 200f,
         maxLines: Int = 1,
-        center: Boolean = false
+        center: Boolean = false,
+        ellipsize: Boolean = true
     ): Bitmap {
         val safe = text.ifBlank { " " }
         val metrics = ctx.resources.displayMetrics
@@ -86,15 +88,15 @@ object WidgetText {
             rtl -> Layout.Alignment.ALIGN_OPPOSITE
             else -> Layout.Alignment.ALIGN_NORMAL
         }
-        val layout = StaticLayout.Builder
+        val builder = StaticLayout.Builder
             .obtain(safe, 0, safe.length, paint, maxW)
             .setAlignment(align)
             .setIncludePad(true)
             .setLineSpacing(0f, 1.05f)
             .setMaxLines(maxLines)
-            .setEllipsize(TextUtils.TruncateAt.END)
             .setTextDirection(if (rtl) TextDirectionHeuristics.RTL else TextDirectionHeuristics.LTR)
-            .build()
+        if (ellipsize) builder.setEllipsize(TextUtils.TruncateAt.END)
+        val layout = builder.build()
 
         var contentW = 1f
         for (i in 0 until layout.lineCount) contentW = maxOf(contentW, layout.getLineMax(i))
@@ -107,22 +109,21 @@ object WidgetText {
         bmp.density = metrics.densityDpi
         val canvas = Canvas(bmp)
         canvas.translate(padX, padY)
-        val tight = StaticLayout.Builder
+        val tightBuilder = StaticLayout.Builder
             .obtain(safe, 0, safe.length, paint, (w - padX * 2).toInt().coerceAtLeast(1))
             .setAlignment(align)
             .setIncludePad(true)
             .setLineSpacing(0f, 1.05f)
             .setMaxLines(maxLines)
-            .setEllipsize(TextUtils.TruncateAt.END)
             .setTextDirection(if (rtl) TextDirectionHeuristics.RTL else TextDirectionHeuristics.LTR)
-            .build()
-        tight.draw(canvas)
+        if (ellipsize) tightBuilder.setEllipsize(TextUtils.TruncateAt.END)
+        tightBuilder.build().draw(canvas)
         return bmp
     }
 
     /**
-     * یک ردیف کامل جدول (نام | مقدار+واحد | تغییر) به صورت یک Bitmap واحد
-     * تا ستون‌ها همیشه هم‌تراز بمانند.
+     * یک ردیف کامل جدول (نام | مقدار+واحد | تغییر) را به‌صورت **یک Bitmap** می‌کشد.
+     * چیدمان داخلی RTL است: نام راست، مقدار وسط، تغییر چپ.
      */
     fun renderRow(
         ctx: Context,
@@ -138,9 +139,9 @@ object WidgetText {
     ): Bitmap {
         val metrics = ctx.resources.displayMetrics
         val totalW = dp(ctx, widthDp).toInt().coerceAtLeast(200)
-        // وزن ستون‌ها (RTL visual): name | value | change  ≈ 1.35 : 1.15 : 0.85
-        val nameW = (totalW * 1.35f / 3.35f).toInt()
-        val valueW = (totalW * 1.15f / 3.35f).toInt()
+        // وزن ستون‌ها (RTL visual): name | value | change  ≈ 1.4 : 1.1 : 0.85
+        val nameW = (totalW * 1.40f / 3.35f).toInt()
+        val valueW = (totalW * 1.10f / 3.35f).toInt()
         val changeW = totalW - nameW - valueW
 
         val namePaint = textPaint(ctx, 12f, nameColor, bold = true)
@@ -148,8 +149,8 @@ object WidgetText {
         val unitPaint = textPaint(ctx, 9f, unitColor, bold = false)
         val changePaint = textPaint(ctx, 11f, changeColor, bold = true)
 
-        val padV = dp(ctx, 6f)
-        val gap = dp(ctx, 2f)
+        val padV = dp(ctx, 4f)
+        val gap = dp(ctx, 1.5f)
 
         val nameLayout = makeLayout(name.ifBlank { " " }, namePaint, nameW - dp(ctx, 4f).toInt(), maxLines = 2, rtl = true)
         val valueLayout = makeLayout(value.ifBlank { " " }, valuePaint, valueW, maxLines = 1, center = true, rtl = false)
@@ -192,7 +193,7 @@ object WidgetText {
         return bmp
     }
 
-    /** هدر جدول (نام / مقدار / تغییر %) */
+    /** هدر جدول — نام راست‌چین، مقدار و تغییر وسط */
     fun renderHeader(
         ctx: Context,
         name: String,
@@ -204,11 +205,12 @@ object WidgetText {
     ): Bitmap {
         val metrics = ctx.resources.displayMetrics
         val totalW = dp(ctx, widthDp).toInt().coerceAtLeast(200)
-        val nameW = (totalW * 1.35f / 3.35f).toInt()
-        val valueW = (totalW * 1.15f / 3.35f).toInt()
+        val nameW = (totalW * 1.40f / 3.35f).toInt()
+        val valueW = (totalW * 1.10f / 3.35f).toInt()
         val changeW = totalW - nameW - valueW
-        val padV = dp(ctx, 4f)
+        val padV = dp(ctx, 3f)
 
+        // نام: راست‌چین (RTL)
         val nameLayout = makeLayout(name, textPaint(ctx, 11f, gold, true), nameW - 4, maxLines = 1, rtl = true)
         val valueLayout = makeLayout(value, textPaint(ctx, 11f, secondary, true), valueW, maxLines = 1, center = true)
         val changeLayout = makeLayout(change, textPaint(ctx, 11f, secondary, true), changeW - 4, maxLines = 1, center = true)
@@ -217,8 +219,11 @@ object WidgetText {
         val bmp = Bitmap.createBitmap(totalW, h, Bitmap.Config.ARGB_8888)
         bmp.density = metrics.densityDpi
         val c = Canvas(bmp)
+        // نام در سمت راست
         c.save(); c.translate((totalW - nameW + 2f), padV); nameLayout.draw(c); c.restore()
+        // مقدار وسط
         c.save(); c.translate(changeW.toFloat(), padV); valueLayout.draw(c); c.restore()
+        // تغییر سمت چپ
         c.save(); c.translate(0f, padV); changeLayout.draw(c); c.restore()
         return bmp
     }
