@@ -138,8 +138,8 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, slot.value,
             valueWithUnit,
-            TABLE_SP, WHITE, bold = true, align = FontHelper.Align.CENTER,
-            maxWidthDp = 110f, fixedWidth = true
+            TABLE_SP, WHITE, bold = true, align = FontHelper.Align.END,
+            maxWidthDp = 120f
         )
         // واحد کنار مبلغ است؛ ImageView واحد مخفی تا فاصله عمودی نباشد
         views.setViewVisibility(slot.unit, View.GONE)
@@ -184,8 +184,8 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_value,
             ctx.getString(R.string.col_value),
-            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER,
-            maxWidthDp = 100f, fixedWidth = true
+            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.END,
+            maxWidthDp = 120f
         )
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_pct,
