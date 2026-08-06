@@ -24,6 +24,19 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Ensure Vazir fonts in res/font
+        run: |
+          mkdir -p app/src/main/res/font
+          if [ ! -f app/src/main/res/font/vazirmatn_regular.ttf ]; then
+            curl -sL -o app/src/main/res/font/vazirmatn_regular.ttf \
+              "https://github.com/rastikerdar/vazirmatn/raw/master/fonts/ttf/Vazirmatn-Regular.ttf"
+          fi
+          if [ ! -f app/src/main/res/font/vazirmatn_bold.ttf ]; then
+            curl -sL -o app/src/main/res/font/vazirmatn_bold.ttf \
+              "https://github.com/rastikerdar/vazirmatn/raw/master/fonts/ttf/Vazirmatn-Bold.ttf"
+          fi
+          ls -lh app/src/main/res/font/
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
@@ -33,7 +46,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: servatmandi-widget-apk
+          name: marketpluss-widget-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 30
