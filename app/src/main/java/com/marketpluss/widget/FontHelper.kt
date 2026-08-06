@@ -26,10 +26,21 @@ object FontHelper {
 
     private fun load(context: Context, path: String): Typeface {
         cache[path]?.let { return it }
+        val assets = context.applicationContext.assets
+        val alt = when (path) {
+            "fonts/vazirmatn_regular.ttf" -> "fonts/Vazirmatn-Regular.ttf"
+            "fonts/vazirmatn_bold.ttf" -> "fonts/Vazirmatn-Bold.ttf"
+            else -> null
+        }
         val tf = try {
-            Typeface.createFromAsset(context.applicationContext.assets, path)
+            Typeface.createFromAsset(assets, path)
         } catch (_: Exception) {
-            Typeface.DEFAULT
+            try {
+                if (alt != null) Typeface.createFromAsset(assets, alt)
+                else Typeface.DEFAULT
+            } catch (_: Exception) {
+                Typeface.DEFAULT
+            }
         }
         cache[path] = tf
         return tf
