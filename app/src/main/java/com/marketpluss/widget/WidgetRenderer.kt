@@ -20,9 +20,9 @@ object WidgetRenderer {
     private val NEG = Color.parseColor("#F87171")
 
     /** عنوان ویجت */
-    private const val TITLE_SP = 18f
+    private const val TITLE_SP = 16f
     /** نام / مقدار / درصد — یکسان */
-    private const val TABLE_SP = 14.5f
+    private const val TABLE_SP = 13.5f
     private const val UNIT_SP = 12f
     private const val ROW_COUNT = 10
 
@@ -139,7 +139,7 @@ object WidgetRenderer {
             views, ctx, slot.value,
             valueWithUnit,
             TABLE_SP, WHITE, bold = true, align = FontHelper.Align.END,
-            maxWidthDp = 120f
+            maxWidthDp = 130f
         )
         // واحد کنار مبلغ است؛ ImageView واحد مخفی تا فاصله عمودی نباشد
         views.setViewVisibility(slot.unit, View.GONE)
@@ -147,7 +147,7 @@ object WidgetRenderer {
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
             TABLE_SP, pctColor, bold = true, align = FontHelper.Align.CENTER,
-            maxWidthDp = 88f, fixedWidth = true
+            maxWidthDp = 80f
         )
 
         val badgeRes = when {
@@ -185,13 +185,13 @@ object WidgetRenderer {
             views, ctx, R.id.iv_header_value,
             ctx.getString(R.string.col_value),
             TABLE_SP, MUTED, bold = true, align = FontHelper.Align.END,
-            maxWidthDp = 120f
+            maxWidthDp = 130f
         )
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_pct,
             ctx.getString(R.string.col_change),
             TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER,
-            maxWidthDp = 88f, fixedWidth = true
+            maxWidthDp = 80f
         )
 
         val refresh = Intent(ctx, MarketWidgetProvider::class.java).apply {
