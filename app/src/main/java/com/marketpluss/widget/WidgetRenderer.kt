@@ -133,18 +133,16 @@ object WidgetRenderer {
             views, ctx, slot.name, item.name, TABLE_SP, WHITE,
             bold = true, maxWidthDp = 140f
         )
+        val valueText = NumberUtils.format(item.value, item.formatDecimals)
+        val valueWithUnit = if (item.unit.isBlank()) valueText else "$valueText ${item.unit}"
         FontHelper.setTextBitmap(
             views, ctx, slot.value,
-            NumberUtils.format(item.value, item.formatDecimals),
+            valueWithUnit,
             TABLE_SP, WHITE, bold = true, align = FontHelper.Align.CENTER,
-            maxWidthDp = 100f, fixedWidth = true
+            maxWidthDp = 110f, fixedWidth = true
         )
-        FontHelper.setTextBitmap(
-            views, ctx, slot.unit,
-            item.unit.ifBlank { " " },
-            UNIT_SP, MUTED, align = FontHelper.Align.CENTER,
-            maxWidthDp = 100f, fixedWidth = true
-        )
+        // واحد کنار مبلغ است؛ ImageView واحد مخفی تا فاصله عمودی نباشد
+        views.setViewVisibility(slot.unit, View.GONE)
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
