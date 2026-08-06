@@ -43,7 +43,6 @@ class ConfigActivity : AppCompatActivity() {
             Prefs.setIntervalMin(this, interval)
             Prefs.setFontSp(this, fontSp)
             UpdateScheduler.schedule(this)
-            // اعمال فوری فونت جدید روی ویجت
             WidgetRenderer.applyCache(this)
             Toast.makeText(this, "ذخیره شد", Toast.LENGTH_SHORT).show()
             val t = if (interval > 0) "هر $interval دقیقه" else "فقط دستی"
@@ -55,6 +54,7 @@ class ConfigActivity : AppCompatActivity() {
             btnRefresh.isEnabled = false
             CoroutineScope(Dispatchers.IO).launch {
                 val ok = WidgetRenderer.fetchAndApply(this@ConfigActivity)
+                UpdateScheduler.scheduleNext(this@ConfigActivity)
                 withContext(Dispatchers.Main) {
                     btnRefresh.isEnabled = true
                     tvStatus.text = if (ok) "✅ بروزرسانی موفق" else "⚠️ خطا — کش قبلی نمایش داده شد"
