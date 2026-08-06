@@ -83,9 +83,8 @@ object WidgetRenderer {
     }
 
     private fun filteredItems(snap: MarketSnapshot): List<MarketItem> {
-        return snap.items
-            .filterNot { it.name.contains("حباب") }
-            .take(ROW_COUNT)
+        // ردیف «طلای ۱۸ عیار (بدون حباب)» باید نمایش داده شود
+        return snap.items.take(ROW_COUNT)
     }
 
     private fun apply(ctx: Context, snap: MarketSnapshot, offline: Boolean) {
@@ -135,17 +134,20 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, slot.value,
             NumberUtils.format(item.value, item.formatDecimals),
-            TABLE_SP, WHITE, bold = true, align = FontHelper.Align.CENTER
+            TABLE_SP, WHITE, bold = true, align = FontHelper.Align.CENTER,
+            maxWidthDp = 100f, fixedWidth = true
         )
         FontHelper.setTextBitmap(
             views, ctx, slot.unit,
             item.unit.ifBlank { " " },
-            12f, MUTED, align = FontHelper.Align.CENTER
+            12f, MUTED, align = FontHelper.Align.CENTER,
+            maxWidthDp = 100f, fixedWidth = true
         )
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
-            TABLE_SP, pctColor, bold = true, align = FontHelper.Align.CENTER
+            TABLE_SP, pctColor, bold = true, align = FontHelper.Align.CENTER,
+            maxWidthDp = 88f, fixedWidth = true
         )
 
         val badgeRes = when {
@@ -182,12 +184,14 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_value,
             ctx.getString(R.string.col_value),
-            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER
+            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER,
+            maxWidthDp = 100f, fixedWidth = true
         )
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_pct,
             ctx.getString(R.string.col_change),
-            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER
+            TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER,
+            maxWidthDp = 88f, fixedWidth = true
         )
 
         val refresh = Intent(ctx, MarketWidgetProvider::class.java).apply {
