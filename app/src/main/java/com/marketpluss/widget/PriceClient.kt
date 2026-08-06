@@ -70,7 +70,7 @@ object PriceClient {
             MarketItem("دلار آمریکا", dollarToman, dollarChg, "تومان"),
             MarketItem("انس طلا", ons, onsChg, "دلار", 2),
             MarketItem("طلا ۱۸ عیار", gold18Toman, gold18Chg, "تومان"),
-            MarketItem("طلای ۱۸ عیار (بدون حباب)", fairGold18, 0.0, "تومان"),
+            MarketItem("طلای بدون حباب", fairGold18, 0.0, "تومان"),
             MarketItem("سکه امامی", sekeeToman, sekeeChg, "تومان"),
             MarketItem("صندوق عیار", ayar, ayarChg, "تومان"),
             MarketItem("بیت‌کوین", btc, btcChg, "دلار", 2),
