@@ -13,39 +13,40 @@ import com.google.gson.Gson
 object WidgetRenderer {
     private val gson = Gson()
 
-    // رنگ‌ها دقیقاً مثل TradePluss
     private val GOLD = Color.parseColor("#F5C542")
     private val WHITE = Color.parseColor("#F8FAFC")
     private val MUTED = Color.parseColor("#A8B2C1")
-    private val SECONDARY = Color.parseColor("#94A3B8")
     private val POS = Color.parseColor("#34D399")
     private val NEG = Color.parseColor("#F87171")
+    private val HIGH_C = Color.parseColor("#7DD3FC")
+    private val LOW_C = Color.parseColor("#FBBF24")
 
-    /** اندازه یکسان هدر جدول + نام/مقدار/درصد — مثل TradePluss */
-    private const val TABLE_SP = 13f
+    /** فونت لیست کمی بزرگ‌تر */
+    private const val TABLE_SP = 14.5f
+    private const val SUB_SP = 12.5f
     private const val ROW_COUNT = 10
 
     private data class RowSlot(
         val row: Int,
         val name: Int,
         val value: Int,
-        val unit: Int,
         val pct: Int,
-        val badge: Int,
+        val high: Int,
+        val low: Int,
         val div: Int
     )
 
     private val slots = arrayOf(
-        RowSlot(R.id.row_0, R.id.iv_name_0, R.id.iv_value_0, R.id.iv_unit_0, R.id.iv_pct_0, R.id.badge_0, R.id.div_0),
-        RowSlot(R.id.row_1, R.id.iv_name_1, R.id.iv_value_1, R.id.iv_unit_1, R.id.iv_pct_1, R.id.badge_1, R.id.div_1),
-        RowSlot(R.id.row_2, R.id.iv_name_2, R.id.iv_value_2, R.id.iv_unit_2, R.id.iv_pct_2, R.id.badge_2, R.id.div_2),
-        RowSlot(R.id.row_3, R.id.iv_name_3, R.id.iv_value_3, R.id.iv_unit_3, R.id.iv_pct_3, R.id.badge_3, R.id.div_3),
-        RowSlot(R.id.row_4, R.id.iv_name_4, R.id.iv_value_4, R.id.iv_unit_4, R.id.iv_pct_4, R.id.badge_4, R.id.div_4),
-        RowSlot(R.id.row_5, R.id.iv_name_5, R.id.iv_value_5, R.id.iv_unit_5, R.id.iv_pct_5, R.id.badge_5, R.id.div_5),
-        RowSlot(R.id.row_6, R.id.iv_name_6, R.id.iv_value_6, R.id.iv_unit_6, R.id.iv_pct_6, R.id.badge_6, R.id.div_6),
-        RowSlot(R.id.row_7, R.id.iv_name_7, R.id.iv_value_7, R.id.iv_unit_7, R.id.iv_pct_7, R.id.badge_7, R.id.div_7),
-        RowSlot(R.id.row_8, R.id.iv_name_8, R.id.iv_value_8, R.id.iv_unit_8, R.id.iv_pct_8, R.id.badge_8, R.id.div_8),
-        RowSlot(R.id.row_9, R.id.iv_name_9, R.id.iv_value_9, R.id.iv_unit_9, R.id.iv_pct_9, R.id.badge_9, R.id.div_9)
+        RowSlot(R.id.row_0, R.id.iv_name_0, R.id.iv_value_0, R.id.iv_pct_0, R.id.iv_high_0, R.id.iv_low_0, R.id.div_0),
+        RowSlot(R.id.row_1, R.id.iv_name_1, R.id.iv_value_1, R.id.iv_pct_1, R.id.iv_high_1, R.id.iv_low_1, R.id.div_1),
+        RowSlot(R.id.row_2, R.id.iv_name_2, R.id.iv_value_2, R.id.iv_pct_2, R.id.iv_high_2, R.id.iv_low_2, R.id.div_2),
+        RowSlot(R.id.row_3, R.id.iv_name_3, R.id.iv_value_3, R.id.iv_pct_3, R.id.iv_high_3, R.id.iv_low_3, R.id.div_3),
+        RowSlot(R.id.row_4, R.id.iv_name_4, R.id.iv_value_4, R.id.iv_pct_4, R.id.iv_high_4, R.id.iv_low_4, R.id.div_4),
+        RowSlot(R.id.row_5, R.id.iv_name_5, R.id.iv_value_5, R.id.iv_pct_5, R.id.iv_high_5, R.id.iv_low_5, R.id.div_5),
+        RowSlot(R.id.row_6, R.id.iv_name_6, R.id.iv_value_6, R.id.iv_pct_6, R.id.iv_high_6, R.id.iv_low_6, R.id.div_6),
+        RowSlot(R.id.row_7, R.id.iv_name_7, R.id.iv_value_7, R.id.iv_pct_7, R.id.iv_high_7, R.id.iv_low_7, R.id.div_7),
+        RowSlot(R.id.row_8, R.id.iv_name_8, R.id.iv_value_8, R.id.iv_pct_8, R.id.iv_high_8, R.id.iv_low_8, R.id.div_8),
+        RowSlot(R.id.row_9, R.id.iv_name_9, R.id.iv_value_9, R.id.iv_pct_9, R.id.iv_high_9, R.id.iv_low_9, R.id.div_9)
     )
 
     fun allIds(ctx: Context): IntArray {
@@ -62,8 +63,12 @@ object WidgetRenderer {
         } catch (e: Exception) {
             val cached = Prefs.getCache(ctx)
             if (cached != null) {
-                val snap = gson.fromJson(cached, MarketSnapshot::class.java)
-                apply(ctx, snap, offline = true)
+                try {
+                    val snap = gson.fromJson(cached, MarketSnapshot::class.java)
+                    apply(ctx, snap, offline = true)
+                } catch (_: Exception) {
+                    showError(ctx, e.message ?: "خطا")
+                }
             } else {
                 showError(ctx, e.message ?: "خطا")
             }
@@ -128,30 +133,32 @@ object WidgetRenderer {
 
         FontHelper.setTextBitmap(
             views, ctx, slot.name, item.name, TABLE_SP, WHITE,
-            bold = true, maxWidthDp = 140f
+            bold = true, maxWidthDp = 118f
         )
+
+        // ستون وسط: آخرین قیمت + درصد
         FontHelper.setTextBitmap(
             views, ctx, slot.value,
             NumberUtils.format(item.value, item.formatDecimals),
             TABLE_SP, WHITE, bold = true, align = FontHelper.Align.CENTER
         )
         FontHelper.setTextBitmap(
-            views, ctx, slot.unit,
-            item.unit.ifBlank { " " },
-            11f, MUTED, align = FontHelper.Align.CENTER
-        )
-        FontHelper.setTextBitmap(
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
-            TABLE_SP, pctColor, bold = true, align = FontHelper.Align.CENTER
+            SUB_SP, pctColor, bold = true, align = FontHelper.Align.CENTER
         )
 
-        val badgeRes = when {
-            positive -> R.drawable.bg_badge_pos
-            neutral -> R.drawable.bg_badge_pos
-            else -> R.drawable.bg_badge_neg
-        }
-        views.setInt(slot.badge, "setBackgroundResource", badgeRes)
+        // ستون چپ: بیشترین / کمترین
+        val highText = if (item.high > 0) NumberUtils.format(item.high, item.formatDecimals) else "—"
+        val lowText = if (item.low > 0) NumberUtils.format(item.low, item.formatDecimals) else "—"
+        FontHelper.setTextBitmap(
+            views, ctx, slot.high, highText,
+            SUB_SP, HIGH_C, bold = true, align = FontHelper.Align.CENTER
+        )
+        FontHelper.setTextBitmap(
+            views, ctx, slot.low, lowText,
+            SUB_SP, LOW_C, bold = true, align = FontHelper.Align.CENTER
+        )
     }
 
     private fun showError(ctx: Context, msg: String) {
@@ -167,14 +174,11 @@ object WidgetRenderer {
     private fun baseViews(ctx: Context, widgetId: Int): RemoteViews {
         val views = RemoteViews(ctx.packageName, R.layout.widget_layout)
 
-        // عنوان ۱۸sp طلایی bold — سمت چپ — مثل TradePluss
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_title,
             ctx.getString(R.string.widget_name),
             18f, GOLD, bold = true
         )
-
-        // هدر جدول ۱۳sp muted bold — مثل TradePluss
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_name,
             ctx.getString(R.string.col_name),
@@ -186,12 +190,11 @@ object WidgetRenderer {
             TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER
         )
         FontHelper.setTextBitmap(
-            views, ctx, R.id.iv_header_pct,
-            ctx.getString(R.string.col_change),
+            views, ctx, R.id.iv_header_range,
+            ctx.getString(R.string.col_range),
             TABLE_SP, MUTED, bold = true, align = FontHelper.Align.CENTER
         )
 
-        // رفرش بی‌صدا: Broadcast → Service
         val refresh = Intent(ctx, MarketWidgetProvider::class.java).apply {
             action = MarketWidgetProvider.ACTION_REFRESH
         }
