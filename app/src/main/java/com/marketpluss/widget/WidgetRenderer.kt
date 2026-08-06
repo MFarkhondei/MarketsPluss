@@ -19,8 +19,11 @@ object WidgetRenderer {
     private val POS = Color.parseColor("#34D399")
     private val NEG = Color.parseColor("#F87171")
 
-    /** فونت لیست کمی بزرگ‌تر از TradePluss اصلی */
+    /** عنوان ویجت */
+    private const val TITLE_SP = 18f
+    /** نام / مقدار / درصد — یکسان */
     private const val TABLE_SP = 14.5f
+    private const val UNIT_SP = 12f
     private const val ROW_COUNT = 10
 
     private data class RowSlot(
@@ -83,7 +86,6 @@ object WidgetRenderer {
     }
 
     private fun filteredItems(snap: MarketSnapshot): List<MarketItem> {
-        // ردیف «طلای ۱۸ عیار (بدون حباب)» باید نمایش داده شود
         return snap.items.take(ROW_COUNT)
     }
 
@@ -140,7 +142,7 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, slot.unit,
             item.unit.ifBlank { " " },
-            12f, MUTED, align = FontHelper.Align.CENTER,
+            UNIT_SP, MUTED, align = FontHelper.Align.CENTER,
             maxWidthDp = 100f, fixedWidth = true
         )
         FontHelper.setTextBitmap(
@@ -174,7 +176,7 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_title,
             ctx.getString(R.string.widget_name),
-            18f, GOLD, bold = true
+            TITLE_SP, GOLD, bold = true
         )
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_name,
