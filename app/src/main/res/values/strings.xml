@@ -3,6 +3,7 @@
     <string name="app_name">مارکت‌پلاس</string>
     <string name="widget_name">مارکت‌پلاس</string>
     <string name="widget_description">قیمت دلار، طلا، سکه، رمزارز و شاخص</string>
+    <string name="live_badge">به‌روزرسانی لحظه‌ای</string>
     <string name="col_name">نام</string>
     <string name="col_value">مقدار</string>
     <string name="col_change">تغییر %</string>

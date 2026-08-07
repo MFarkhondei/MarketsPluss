@@ -141,14 +141,21 @@ object WidgetRenderer {
             bold = true, maxWidthDp = 140f
         )
         val valueText = NumberUtils.format(item.value, item.formatDecimals)
-        val valueWithUnit = if (item.unit.isBlank()) valueText else "$valueText ${item.unit}"
         FontHelper.setTextBitmap(
             views, ctx, slot.value,
-            valueWithUnit,
-            fs.table, WHITE, bold = true, align = FontHelper.Align.END,
+            valueText,
+            fs.table, WHITE, bold = true, align = FontHelper.Align.CENTER,
             maxWidthDp = 130f
         )
-        views.setViewVisibility(slot.unit, View.GONE)
+        if (item.unit.isBlank()) {
+            views.setViewVisibility(slot.unit, View.GONE)
+        } else {
+            views.setViewVisibility(slot.unit, View.VISIBLE)
+            FontHelper.setTextBitmap(
+                views, ctx, slot.unit, item.unit, fs.stamp, MUTED,
+                align = FontHelper.Align.CENTER, maxWidthDp = 130f
+            )
+        }
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
@@ -158,7 +165,7 @@ object WidgetRenderer {
 
         val badgeRes = when {
             positive -> R.drawable.bg_badge_pos
-            neutral -> R.drawable.bg_badge_pos
+            neutral -> R.drawable.bg_badge_neutral
             else -> R.drawable.bg_badge_neg
         }
         views.setInt(slot.badge, "setBackgroundResource", badgeRes)
@@ -184,6 +191,11 @@ object WidgetRenderer {
             fs.title, GOLD, bold = true
         )
         FontHelper.setTextBitmap(
+            views, ctx, R.id.iv_subtitle,
+            ctx.getString(R.string.live_badge),
+            fs.stamp, MUTED
+        )
+        FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_name,
             ctx.getString(R.string.col_name),
             fs.table, MUTED, bold = true
@@ -191,7 +203,7 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, R.id.iv_header_value,
             ctx.getString(R.string.col_value),
-            fs.table, MUTED, bold = true, align = FontHelper.Align.END,
+            fs.table, MUTED, bold = true, align = FontHelper.Align.CENTER,
             maxWidthDp = 130f
         )
         FontHelper.setTextBitmap(
@@ -212,6 +224,7 @@ object WidgetRenderer {
         views.setOnClickPendingIntent(R.id.widget_root, pi)
         views.setOnClickPendingIntent(R.id.btn_refresh, pi)
         views.setOnClickPendingIntent(R.id.iv_title, pi)
+        views.setOnClickPendingIntent(R.id.iv_subtitle, pi)
         views.setOnClickPendingIntent(R.id.iv_updated_at, pi)
         views.setOnClickPendingIntent(R.id.iv_header_name, pi)
         views.setOnClickPendingIntent(R.id.iv_header_value, pi)
