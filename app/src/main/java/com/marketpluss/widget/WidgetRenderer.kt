@@ -19,7 +19,7 @@ object WidgetRenderer {
     private val POS = Color.parseColor("#34D399")
     private val NEG = Color.parseColor("#F87171")
 
-    private const val ROW_COUNT = 10
+    private const val ROW_COUNT = 11
 
     private data class FontSizes(val title: Float, val table: Float, val stamp: Float)
 
@@ -52,7 +52,8 @@ object WidgetRenderer {
         RowSlot(R.id.row_6, R.id.iv_name_6, R.id.iv_value_6, R.id.iv_unit_6, R.id.iv_pct_6, R.id.badge_6, R.id.div_6),
         RowSlot(R.id.row_7, R.id.iv_name_7, R.id.iv_value_7, R.id.iv_unit_7, R.id.iv_pct_7, R.id.badge_7, R.id.div_7),
         RowSlot(R.id.row_8, R.id.iv_name_8, R.id.iv_value_8, R.id.iv_unit_8, R.id.iv_pct_8, R.id.badge_8, R.id.div_8),
-        RowSlot(R.id.row_9, R.id.iv_name_9, R.id.iv_value_9, R.id.iv_unit_9, R.id.iv_pct_9, R.id.badge_9, R.id.div_9)
+        RowSlot(R.id.row_9, R.id.iv_name_9, R.id.iv_value_9, R.id.iv_unit_9, R.id.iv_pct_9, R.id.badge_9, R.id.div_9),
+        RowSlot(R.id.row_10, R.id.iv_name_10, R.id.iv_value_10, R.id.iv_unit_10, R.id.iv_pct_10, R.id.badge_10, R.id.div_10)
     )
 
     fun allIds(ctx: Context): IntArray {
