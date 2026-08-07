@@ -19,6 +19,7 @@ class ConfigActivity : AppCompatActivity() {
 
         val spinnerInterval = findViewById<Spinner>(R.id.spinner_interval)
         val spinnerFont = findViewById<Spinner>(R.id.spinner_font)
+        val spinnerViewMode = findViewById<Spinner>(R.id.spinner_view_mode)
         val btnSave = findViewById<MaterialButton>(R.id.btn_save)
         val btnRefresh = findViewById<MaterialButton>(R.id.btn_refresh_now)
         val tvStatus = findViewById<TextView>(R.id.tv_status)
@@ -35,13 +36,20 @@ class ConfigActivity : AppCompatActivity() {
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, fontLabels)
         spinnerFont.setSelection(Prefs.fontOptionIndex(this))
 
+        val viewModeLabels = resources.getStringArray(R.array.view_mode_labels)
+        spinnerViewMode.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, viewModeLabels)
+        spinnerViewMode.setSelection(Prefs.getViewMode(this))
+
         btnSave.setOnClickListener {
             val interval = Prefs.INTERVAL_OPTIONS.getOrElse(spinnerInterval.selectedItemPosition) { 30 }
             val fontSp = Prefs.FONT_OPTIONS.getOrElse(spinnerFont.selectedItemPosition) {
                 Prefs.FONT_DEFAULT
             }
+            val viewMode = spinnerViewMode.selectedItemPosition
             Prefs.setIntervalMin(this, interval)
             Prefs.setFontSp(this, fontSp)
+            Prefs.setViewMode(this, viewMode)
             UpdateScheduler.schedule(this)
             WidgetRenderer.applyCache(this)
             Toast.makeText(this, "ذخیره شد", Toast.LENGTH_SHORT).show()

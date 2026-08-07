@@ -8,12 +8,17 @@ object Prefs {
     private const val KEY_CACHE = "cache_json"
     private const val KEY_CACHE_AT = "cache_at"
     private const val KEY_FONT_SP = "font_size_sp"
+    private const val KEY_VIEW_MODE = "view_mode"
 
     val INTERVAL_OPTIONS = intArrayOf(15, 30, 60, 120, 0)
 
     /** اندازه فونت لیست (sp) */
     val FONT_OPTIONS = floatArrayOf(12f, 13.5f, 15f, 16.5f)
     const val FONT_DEFAULT = 13.5f
+
+    /** نوع نمایش ویجت */
+    const val VIEW_MODE_LIST = 0
+    const val VIEW_MODE_BOX = 1
 
     private fun p(ctx: Context) =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
@@ -35,6 +40,12 @@ object Prefs {
         val cur = getFontSp(ctx)
         val idx = FONT_OPTIONS.indexOfFirst { kotlin.math.abs(it - cur) < 0.01f }
         return if (idx >= 0) idx else 1
+    }
+
+    fun getViewMode(ctx: Context): Int = p(ctx).getInt(KEY_VIEW_MODE, VIEW_MODE_LIST)
+
+    fun setViewMode(ctx: Context, mode: Int) {
+        p(ctx).edit().putInt(KEY_VIEW_MODE, mode).apply()
     }
 
     fun saveCache(ctx: Context, json: String) {
