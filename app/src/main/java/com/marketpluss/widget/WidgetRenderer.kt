@@ -140,7 +140,7 @@ object WidgetRenderer {
 
             if (isBox) {
                 val pctLabelBmp = FontHelper.render(
-                    app, ctx.getString(R.string.col_change), fs.stamp - 1f, MUTED
+                    app, ctx.getString(R.string.col_change), (fs.stamp - 2.5f).coerceAtLeast(9f), MUTED
                 )
                 items.forEachIndexed { i, item ->
                     val slot = boxSlots[i]
@@ -231,28 +231,32 @@ object WidgetRenderer {
             else -> ""
         }
 
+        val nameSize = fs.stamp
+        val valueSize = (fs.table + 1.5f).coerceAtMost(18f)
+        val unitSize = (fs.stamp - 1.5f).coerceAtLeast(9f)
+
         FontHelper.setTextBitmap(
-            views, ctx, slot.name, item.name, fs.table, WHITE,
-            bold = true, maxWidthDp = 110f
+            views, ctx, slot.name, item.name, nameSize, WHITE,
+            bold = true, maxWidthDp = 100f
         )
         val valueText = NumberUtils.format(item.value, item.formatDecimals)
         FontHelper.setTextBitmap(
             views, ctx, slot.value,
             valueText,
-            fs.table, WHITE, bold = true, maxWidthDp = 110f
+            valueSize, WHITE, bold = true, maxWidthDp = 100f
         )
         if (item.unit.isBlank()) {
             views.setViewVisibility(slot.unit, View.GONE)
         } else {
             views.setViewVisibility(slot.unit, View.VISIBLE)
             FontHelper.setTextBitmap(
-                views, ctx, slot.unit, item.unit, fs.stamp, MUTED, maxWidthDp = 110f
+                views, ctx, slot.unit, item.unit, unitSize, MUTED, maxWidthDp = 100f
             )
         }
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
-            fs.stamp, pctColor, bold = true
+            unitSize, pctColor, bold = true
         )
 
         val badgeRes = when {
@@ -263,7 +267,7 @@ object WidgetRenderer {
         views.setInt(slot.badge, "setBackgroundResource", badgeRes)
 
         val iconType = IconHelper.iconFor(item.name)
-        views.setImageViewBitmap(slot.icon, IconHelper.render(ctx, iconType))
+        views.setImageViewBitmap(slot.icon, IconHelper.render(ctx, iconType, sizeDp = 40f))
     }
 
     private fun showError(ctx: Context, msg: String) {
