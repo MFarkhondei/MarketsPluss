@@ -52,6 +52,9 @@ object PriceClient {
         val silverOns = price("silver")
         val silverChg = change("silver")
 
+        val copperOns = price("copper")
+        val copperChg = change("copper")
+
         val btc = price("crypto-bitcoin")
         val btcChg = change("crypto-bitcoin")
         val eth = price("crypto-ethereum")
@@ -76,9 +79,10 @@ object PriceClient {
             MarketItem("طلای بدون حباب", fairGold18, 0.0, "تومان"),
             MarketItem("سکه امامی", sekeeToman, sekeeChg, "تومان"),
             MarketItem("صندوق عیار", ayar, ayarChg, "تومان"),
-            MarketItem("انس نقره", silverOns, silverChg, "دلار", 2),
             MarketItem("بیت‌کوین", btc, btcChg, "دلار", 2),
             MarketItem("اتریوم", eth, ethChg, "دلار", 2),
+            MarketItem("انس نقره", silverOns, silverChg, "دلار", 2),
+            MarketItem("انس مس", copperOns, copperChg, "دلار", 2),
             MarketItem("شاخص بورس / دلار", indexPerDollar, bourseChg, "", 2),
             MarketItem("سهم موج", moj, mojChg, "تومان")
         )
