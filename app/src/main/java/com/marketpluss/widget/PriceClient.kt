@@ -18,9 +18,10 @@ import java.util.TimeZone
 object PriceClient {
     private val gson = Gson()
     private const val TGJU = "https://call1.tgju.org/ajax.json"
+    private const val TAVAN_URL = "https://www.shakhesban.com/markets/fund/%D8%AA%D9%88%D8%A7%D9%86"
 
     fun fetchSnapshot(): MarketSnapshot {
-        val body = httpGet(TGJU)
+        val body = httpGet(TGJU, jsonAccept = true)
         val root = gson.fromJson(body, JsonObject::class.java)
         val current = root.getAsJsonObject("current")
             ?: throw Exception("داده قیمت خالی است")
@@ -52,13 +53,22 @@ object PriceClient {
         val silverOns = price("silver")
         val silverChg = change("silver")
 
-        val copperOns = price("copper")
-        val copperChg = change("copper")
+        // https://www.tgju.org/profile/basemetal-copper
+        val copperOns = price("basemetal-copper")
+        val copperChg = change("basemetal-copper")
 
         val btc = price("crypto-bitcoin")
         val btcChg = change("crypto-bitcoin")
         val eth = price("crypto-ethereum")
         val ethChg = change("crypto-ethereum")
+
+        // https://www.tgju.org/profile/s_p_500_us
+        val snp500 = price("s_p_500_us")
+        val snp500Chg = change("s_p_500_us")
+
+        // https://www.tgju.org/profile/nasdaq_us
+        val nasdaq = price("nasdaq_us")
+        val nasdaqChg = change("nasdaq_us")
 
         val bourse = price("bourse")
         val bourseChg = change("bourse")
@@ -69,8 +79,8 @@ object PriceClient {
             ons * dollarToman * (18.0 / 24.0) / 31.1034768
         } else 0.0
 
-        val moj = price("ime_fund_nahal").takeIf { it > 0 } ?: 0.0
-        val mojChg = change("ime_fund_nahal")
+        // https://www.shakhesban.com/markets/fund/توان
+        val tavan = fetchShakhesbanFund(TAVAN_URL)
 
         val items = listOf(
             MarketItem("دلار آمریکا", dollarToman, dollarChg, "تومان"),
@@ -83,8 +93,10 @@ object PriceClient {
             MarketItem("اتریوم", eth, ethChg, "دلار", 2),
             MarketItem("انس نقره", silverOns, silverChg, "دلار", 2),
             MarketItem("انس مس", copperOns, copperChg, "دلار", 2),
+            MarketItem("S&P 500", snp500, snp500Chg, "", 2),
+            MarketItem("Nasdaq", nasdaq, nasdaqChg, "", 2),
             MarketItem("شاخص بورس / دلار", indexPerDollar, bourseChg, "", 2),
-            MarketItem("سهم موج", moj, mojChg, "تومان")
+            MarketItem("سهم توان", tavan.first, tavan.second, "تومان")
         )
 
         val sdf = SimpleDateFormat("HH:mm", Locale.US)
@@ -92,7 +104,30 @@ object PriceClient {
         return MarketSnapshot(items, sdf.format(Date()))
     }
 
-    private fun httpGet(urlStr: String): String {
+    /**
+     * قیمت صندوق «توان» از شاخص‌بان خوانده می‌شود (این صفحه API عمومی ندارد،
+     * بنابراین قیمت و درصد تغییر با استخراج از متن HTML صفحه به‌دست می‌آید).
+     * اگر ساختار صفحه در آینده تغییر کند، این تابع مقدار صفر برمی‌گرداند.
+     */
+    private fun fetchShakhesbanFund(url: String): Pair<Double, Double> {
+        return try {
+            val html = httpGet(url, jsonAccept = false)
+            val text = html.replace(Regex("<[^>]+>"), " ")
+            val m = Regex("آخرین\\s*قیمت[^0-9\\-]*([0-9,]+)[^0-9\\-]*(-?[0-9]+(?:\\.[0-9]+)?)")
+                .find(text)
+            if (m != null) {
+                val price = NumberUtils.parseNumber(m.groupValues[1])
+                val chg = m.groupValues[2].toDoubleOrNull() ?: 0.0
+                price to chg
+            } else {
+                0.0 to 0.0
+            }
+        } catch (_: Exception) {
+            0.0 to 0.0
+        }
+    }
+
+    private fun httpGet(urlStr: String, jsonAccept: Boolean = true): String {
         var current = urlStr
         var redirects = 0
         while (redirects < 5) {
@@ -101,8 +136,8 @@ object PriceClient {
                 connectTimeout = 15000
                 readTimeout = 25000
                 requestMethod = "GET"
-                setRequestProperty("User-Agent", "MarketPluss/1.5")
-                setRequestProperty("Accept", "application/json")
+                setRequestProperty("User-Agent", "Mozilla/5.0 (Android) MarketPluss/1.5")
+                setRequestProperty("Accept", if (jsonAccept) "application/json" else "text/html")
             }
             try {
                 val code = conn.responseCode
