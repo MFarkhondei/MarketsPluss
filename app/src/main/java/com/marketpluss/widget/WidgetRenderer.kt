@@ -62,7 +62,6 @@ object WidgetRenderer {
 
     private data class BoxSlot(
         val card: Int,
-        val icon: Int,
         val pctLabel: Int,
         val pct: Int,
         val badge: Int,
@@ -72,17 +71,17 @@ object WidgetRenderer {
     )
 
     private val boxSlots = arrayOf(
-        BoxSlot(R.id.card_0, R.id.iv_icon_0, R.id.iv_pctlabel_0, R.id.iv_pct_0, R.id.badge_0, R.id.iv_name_0, R.id.iv_value_0, R.id.iv_unit_0),
-        BoxSlot(R.id.card_1, R.id.iv_icon_1, R.id.iv_pctlabel_1, R.id.iv_pct_1, R.id.badge_1, R.id.iv_name_1, R.id.iv_value_1, R.id.iv_unit_1),
-        BoxSlot(R.id.card_2, R.id.iv_icon_2, R.id.iv_pctlabel_2, R.id.iv_pct_2, R.id.badge_2, R.id.iv_name_2, R.id.iv_value_2, R.id.iv_unit_2),
-        BoxSlot(R.id.card_3, R.id.iv_icon_3, R.id.iv_pctlabel_3, R.id.iv_pct_3, R.id.badge_3, R.id.iv_name_3, R.id.iv_value_3, R.id.iv_unit_3),
-        BoxSlot(R.id.card_4, R.id.iv_icon_4, R.id.iv_pctlabel_4, R.id.iv_pct_4, R.id.badge_4, R.id.iv_name_4, R.id.iv_value_4, R.id.iv_unit_4),
-        BoxSlot(R.id.card_5, R.id.iv_icon_5, R.id.iv_pctlabel_5, R.id.iv_pct_5, R.id.badge_5, R.id.iv_name_5, R.id.iv_value_5, R.id.iv_unit_5),
-        BoxSlot(R.id.card_6, R.id.iv_icon_6, R.id.iv_pctlabel_6, R.id.iv_pct_6, R.id.badge_6, R.id.iv_name_6, R.id.iv_value_6, R.id.iv_unit_6),
-        BoxSlot(R.id.card_7, R.id.iv_icon_7, R.id.iv_pctlabel_7, R.id.iv_pct_7, R.id.badge_7, R.id.iv_name_7, R.id.iv_value_7, R.id.iv_unit_7),
-        BoxSlot(R.id.card_8, R.id.iv_icon_8, R.id.iv_pctlabel_8, R.id.iv_pct_8, R.id.badge_8, R.id.iv_name_8, R.id.iv_value_8, R.id.iv_unit_8),
-        BoxSlot(R.id.card_9, R.id.iv_icon_9, R.id.iv_pctlabel_9, R.id.iv_pct_9, R.id.badge_9, R.id.iv_name_9, R.id.iv_value_9, R.id.iv_unit_9),
-        BoxSlot(R.id.card_10, R.id.iv_icon_10, R.id.iv_pctlabel_10, R.id.iv_pct_10, R.id.badge_10, R.id.iv_name_10, R.id.iv_value_10, R.id.iv_unit_10)
+        BoxSlot(R.id.card_0, R.id.iv_pctlabel_0, R.id.iv_pct_0, R.id.badge_0, R.id.iv_name_0, R.id.iv_value_0, R.id.iv_unit_0),
+        BoxSlot(R.id.card_1, R.id.iv_pctlabel_1, R.id.iv_pct_1, R.id.badge_1, R.id.iv_name_1, R.id.iv_value_1, R.id.iv_unit_1),
+        BoxSlot(R.id.card_2, R.id.iv_pctlabel_2, R.id.iv_pct_2, R.id.badge_2, R.id.iv_name_2, R.id.iv_value_2, R.id.iv_unit_2),
+        BoxSlot(R.id.card_3, R.id.iv_pctlabel_3, R.id.iv_pct_3, R.id.badge_3, R.id.iv_name_3, R.id.iv_value_3, R.id.iv_unit_3),
+        BoxSlot(R.id.card_4, R.id.iv_pctlabel_4, R.id.iv_pct_4, R.id.badge_4, R.id.iv_name_4, R.id.iv_value_4, R.id.iv_unit_4),
+        BoxSlot(R.id.card_5, R.id.iv_pctlabel_5, R.id.iv_pct_5, R.id.badge_5, R.id.iv_name_5, R.id.iv_value_5, R.id.iv_unit_5),
+        BoxSlot(R.id.card_6, R.id.iv_pctlabel_6, R.id.iv_pct_6, R.id.badge_6, R.id.iv_name_6, R.id.iv_value_6, R.id.iv_unit_6),
+        BoxSlot(R.id.card_7, R.id.iv_pctlabel_7, R.id.iv_pct_7, R.id.badge_7, R.id.iv_name_7, R.id.iv_value_7, R.id.iv_unit_7),
+        BoxSlot(R.id.card_8, R.id.iv_pctlabel_8, R.id.iv_pct_8, R.id.badge_8, R.id.iv_name_8, R.id.iv_value_8, R.id.iv_unit_8),
+        BoxSlot(R.id.card_9, R.id.iv_pctlabel_9, R.id.iv_pct_9, R.id.badge_9, R.id.iv_name_9, R.id.iv_value_9, R.id.iv_unit_9),
+        BoxSlot(R.id.card_10, R.id.iv_pctlabel_10, R.id.iv_pct_10, R.id.badge_10, R.id.iv_name_10, R.id.iv_value_10, R.id.iv_unit_10)
     )
 
     fun allIds(ctx: Context): IntArray {
@@ -265,9 +264,6 @@ object WidgetRenderer {
             else -> R.drawable.bg_badge_neg
         }
         views.setInt(slot.badge, "setBackgroundResource", badgeRes)
-
-        val iconType = IconHelper.iconFor(item.name)
-        views.setImageViewBitmap(slot.icon, IconHelper.render(ctx, iconType, sizeDp = 40f))
     }
 
     private fun showError(ctx: Context, msg: String) {
