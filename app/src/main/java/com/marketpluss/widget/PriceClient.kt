@@ -89,7 +89,7 @@ object PriceClient {
             MarketItem("انس مس", copperOns, copperChg, "دلار", 2),
             MarketItem("S&P 500", snp500, snp500Chg, "", 2),
             MarketItem("Nasdaq", nasdaq, nasdaqChg, "", 2),
-            MarketItem("شاخص بورس / دلار", indexPerDollar, bourseChg, "", 2),
+            MarketItem("شاخص بورس / دلار", indexPerDollar, bourseChg, "نسبت", 2),
             MarketItem("سهم موج", mowj.first, mowj.second, "تومان")
         )
 
@@ -123,23 +123,30 @@ object PriceClient {
 
     // ---------- TSETMC (شاخص بورس، سهم موج، صندوق گنج) ----------
 
+    // insCode شناخته‌شده‌ی «شاخص کل» بورس تهران در سرویس GetIndexB1LastAll
+    private const val TSETMC_TOTAL_INDEX_INS_CODE = "32097828799138957"
+    private const val TSETMC_TOTAL_INDEX_NAME = "شاخص كل"
+
     /**
-     * نام دقیق فیلدهای این سرویس (GetIndexB1LastAll) در مستندات عمومی موجود نیست؛
-     * چند کلید محتمل بررسی می‌شود. در صورت تغییر ساختار پاسخ یا نتیجه‌ی صفر،
-     * لازم است این لیست کلیدها با بررسی پاسخ واقعی سرویس به‌روز شود.
+     * پاسخ GetIndexB1LastAll آرایه‌ای به نام indexB1 است که هر آیتم یک شاخص را نشان می‌دهد
+     * (شاخص کل، شاخص کل هم‌وزن، شاخص قیمت، ...). آیتم «شاخص کل» با insCode ثابت شناسایی
+     * می‌شود؛ در صورت نبودنش (مثلاً تغییر insCode)، بر اساس نام lVal30 هم جست‌وجو می‌شود.
+     * xDrNivJIdx004 = مقدار لحظه‌ای شاخص، xVarIdxJRfV = درصد تغییر نسبت به روز قبل.
      */
     private fun fetchTsetmcIndex(): Pair<Double, Double> {
         return try {
             val body = httpGet(TSETMC_INDEX, jsonAccept = true)
-            val root = gson.fromJson(body, JsonElement::class.java)
-            val value = findFirstDouble(
-                root,
-                "xNivInuPh", "lastValue", "indexValue", "value", "pClosing", "close"
-            ) ?: 0.0
-            val changePercent = findFirstDouble(
-                root,
-                "changePercent", "percentChange", "drPercent", "dPercent", "percent", "changePercentage"
-            ) ?: 0.0
+            val root = gson.fromJson(body, JsonObject::class.java)
+            val list = root.getAsJsonArray("indexB1") ?: return 0.0 to 0.0
+
+            val total = list.firstOrNull {
+                it.isJsonObject && it.asJsonObject.get("insCode")?.asString == TSETMC_TOTAL_INDEX_INS_CODE
+            }?.asJsonObject ?: list.firstOrNull {
+                it.isJsonObject && it.asJsonObject.get("lVal30")?.asString?.trim() == TSETMC_TOTAL_INDEX_NAME
+            }?.asJsonObject ?: return 0.0 to 0.0
+
+            val value = total.get("xDrNivJIdx004")?.takeIf { !it.isJsonNull }?.asDouble ?: 0.0
+            val changePercent = total.get("xVarIdxJRfV")?.takeIf { !it.isJsonNull }?.asDouble ?: 0.0
             value to changePercent
         } catch (_: Exception) {
             0.0 to 0.0
