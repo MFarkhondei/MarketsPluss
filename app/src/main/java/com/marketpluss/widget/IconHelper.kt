@@ -30,7 +30,7 @@ object IconHelper {
         "طلا ۱۸ عیار" -> IconType.GOLD_18K
         "طلای بدون حباب" -> IconType.GOLD_NUGGET
         "سکه امامی" -> IconType.COIN
-        "صندوق عیار" -> IconType.SAFE
+        "صندوق گنج" -> IconType.SAFE
         "انس نقره" -> IconType.SILVER_BAR
         "بیت‌کوین" -> IconType.BITCOIN
         "اتریوم" -> IconType.ETHEREUM
