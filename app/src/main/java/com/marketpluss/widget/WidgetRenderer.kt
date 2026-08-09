@@ -144,13 +144,9 @@ object WidgetRenderer {
             FontHelper.setTextBitmap(views, app, R.id.iv_updated_at, stamp, fs.stamp, MUTED)
 
             if (isBox) {
-                val pctLabelBmp = FontHelper.render(
-                    app, ctx.getString(R.string.col_change), (fs.stamp - 2.5f).coerceAtLeast(9f), MUTED
-                )
                 items.forEachIndexed { i, item ->
                     val slot = boxSlots[i]
                     views.setViewVisibility(slot.card, View.VISIBLE)
-                    views.setImageViewBitmap(slot.pctLabel, pctLabelBmp)
                     bindBoxRow(app, views, slot, item, fs)
                 }
                 for (i in items.size until ROW_COUNT) {
@@ -239,6 +235,9 @@ object WidgetRenderer {
         val nameSize = fs.stamp
         val valueSize = (fs.table + 1.5f).coerceAtMost(18f)
         val unitSize = (fs.stamp - 1.5f).coerceAtLeast(9f)
+        val pctSize = (unitSize + 2f)
+
+        views.setViewVisibility(slot.pctLabel, View.GONE)
 
         FontHelper.setTextBitmap(
             views, ctx, slot.name, item.name, nameSize, WHITE,
@@ -261,7 +260,7 @@ object WidgetRenderer {
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
             NumberUtils.formatChange(item.changePercent) + arrow,
-            unitSize, pctColor, bold = true
+            pctSize, pctColor, bold = true
         )
 
         val badgeRes = when {
