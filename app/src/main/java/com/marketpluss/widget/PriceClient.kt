@@ -67,6 +67,10 @@ object PriceClient {
 
         // طلای بدون حباب = انس طلا × دلار آمریکا ÷ 41.45
         val fairGold18 = if (ons > 0 && dollarToman > 0) ons * dollarToman / 41.45 else 0.0
+        // درصد تغییرش ترکیب درصد تغییر انس طلا و درصد تغییر دلار است
+        val fairGold18Chg = if (ons > 0 && dollarToman > 0) {
+            ((1.0 + onsChg / 100.0) * (1.0 + dollarChg / 100.0) - 1.0) * 100.0
+        } else 0.0
 
         // شاخص بورس / دلار: TSETMC ÷ قیمت دلار
         val (bourse, bourseChg) = fetchTsetmcIndex()
@@ -78,17 +82,17 @@ object PriceClient {
 
         val items = listOf(
             MarketItem("دلار آمریکا", dollarToman, dollarChg, "تومان"),
-            MarketItem("انس طلا", ons, onsChg, "دلار", 2),
+            MarketItem("انس طلا", ons, onsChg, "دلار", 0),
             MarketItem("طلا ۱۸ عیار", gold18Toman, gold18Chg, "تومان"),
-            MarketItem("طلای بدون حباب", fairGold18, 0.0, "تومان"),
+            MarketItem("طلای بدون حباب", fairGold18, fairGold18Chg, "تومان"),
             MarketItem("سکه امامی", sekeeToman, sekeeChg, "تومان"),
             MarketItem("صندوق گنج", ganj.first, ganj.second, "تومان"),
-            MarketItem("بیت‌کوین", btc, btcChg, "دلار", 2),
-            MarketItem("اتریوم", eth, ethChg, "دلار", 2),
+            MarketItem("بیت‌کوین", btc, btcChg, "دلار", 0),
+            MarketItem("اتریوم", eth, ethChg, "دلار", 0),
             MarketItem("انس نقره", silverOns, silverChg, "دلار", 2),
             MarketItem("انس مس", copperOns, copperChg, "دلار", 2),
-            MarketItem("S&P 500", snp500, snp500Chg, "", 2),
-            MarketItem("Nasdaq", nasdaq, nasdaqChg, "", 2),
+            MarketItem("S&P 500", snp500, snp500Chg, "دلار", 0),
+            MarketItem("Nasdaq", nasdaq, nasdaqChg, "دلار", 0),
             MarketItem("شاخص بورس / دلار", indexPerDollar, bourseChg, "نسبت", 2),
             MarketItem("سهم موج", mowj.first, mowj.second, "تومان")
         )
