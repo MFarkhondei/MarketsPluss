@@ -97,7 +97,10 @@ object WidgetRenderer {
 
     fun fetchAndApply(ctx: Context): Boolean {
         return try {
-            val snap = PriceClient.fetchSnapshot()
+            val previous = Prefs.getCache(ctx)?.let {
+                try { gson.fromJson(it, MarketSnapshot::class.java) } catch (_: Exception) { null }
+            }
+            val snap = PriceClient.fetchSnapshot(previous)
             Prefs.saveCache(ctx, gson.toJson(snap))
             apply(ctx, snap, offline = false)
             SupabaseClient.saveDailyIfNeeded(ctx, snap)

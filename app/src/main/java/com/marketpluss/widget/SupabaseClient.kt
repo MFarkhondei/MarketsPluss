@@ -1,7 +1,10 @@
 package com.marketpluss.widget
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -32,20 +35,28 @@ import java.util.TimeZone
  * تا وقتی پر نشده باشند، این کلاس کاری انجام نمی‌دهد (خطایی هم تولید نمی‌کند).
  */
 object SupabaseClient {
-    private const val SUPABASE_URL = "https://qlpdrrbeyvejhjrrnihp.supabase.co"
-    private const val SUPABASE_ANON_KEY = "sb_publishable_gOE9-0Z2BJ_EfhcYeS6mMA_nt1pB2Ed"
+    private const val SUPABASE_URL = "https://YOUR-PROJECT.supabase.co"
+    private const val SUPABASE_ANON_KEY = "YOUR-ANON-KEY"
     private const val TABLE = "market_daily_prices"
 
     private val gson = Gson()
+
+    private const val TAG = "SupabaseClient"
 
     private fun isConfigured(): Boolean =
         !SUPABASE_URL.contains("YOUR-PROJECT") && !SUPABASE_ANON_KEY.contains("YOUR-ANON-KEY")
 
     /** اگر امروز (به وقت تهران) هنوز ذخیره نشده، اسنپ‌شات فعلی را در سوپابیس ثبت می‌کند. */
     fun saveDailyIfNeeded(ctx: Context, snap: MarketSnapshot) {
-        if (!isConfigured()) return
+        if (!isConfigured()) {
+            Log.w(TAG, "رد شد: SUPABASE_URL / SUPABASE_ANON_KEY هنوز پر نشده‌اند")
+            return
+        }
         val today = todayTehran()
-        if (Prefs.getLastDailySaveDate(ctx) == today) return
+        if (Prefs.getLastDailySaveDate(ctx) == today) {
+            Log.d(TAG, "رد شد: امروز ($today) قبلاً ذخیره شده")
+            return
+        }
 
         try {
             val rows = snap.items.map { item ->
@@ -74,12 +85,18 @@ object SupabaseClient {
                 val code = conn.responseCode
                 if (code in 200..299) {
                     Prefs.setLastDailySaveDate(ctx, today)
+                    Log.d(TAG, "ذخیره شد: $today (${rows.size} ردیف)")
+                } else {
+                    val err = (conn.errorStream ?: conn.inputStream)?.let {
+                        BufferedReader(InputStreamReader(it, StandardCharsets.UTF_8)).use { r -> r.readText() }
+                    }
+                    Log.e(TAG, "ذخیره ناموفق — HTTP $code: $err")
                 }
             } finally {
                 conn.disconnect()
             }
-        } catch (_: Exception) {
-            // اتصال ناموفق بود؛ در بروزرسانی بعدی ویجت دوباره تلاش می‌شود
+        } catch (e: Exception) {
+            Log.e(TAG, "خطای اتصال به سوپابیس", e)
         }
     }
 

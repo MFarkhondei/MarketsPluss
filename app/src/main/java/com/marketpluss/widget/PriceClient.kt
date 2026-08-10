@@ -31,7 +31,18 @@ object PriceClient {
     // https://tsetmc.com/instInfo/58514988269776425 (صندوق گنج)
     private const val TSETMC_GANJ = "https://cdn.tsetmc.com/api/ClosingPrice/GetClosingPriceInfo/58514988269776425"
 
-    fun fetchSnapshot(): MarketSnapshot {
+    /**
+     * @param previous آخرین اسنپ‌شات موفق (از کش). وقتی یک منبع دچار اختلال شود و مقدار
+     * جدیدی برنگرداند، به‌جای صفر کردن آیتم، مقدار قبلی از همین اسنپ‌شات نگه داشته می‌شود.
+     */
+    fun fetchSnapshot(previous: MarketSnapshot? = null): MarketSnapshot {
+        fun prev(name: String): Pair<Double, Double>? =
+            previous?.items?.firstOrNull { it.name == name }?.let { it.value to it.changePercent }
+
+        /** اگر مقدار تازه در دسترس نبود، مقدار قبلی همان آیتم را نگه می‌دارد (نه صفر). */
+        fun freshOrPrevious(name: String, fresh: Pair<Double, Double>?): Pair<Double, Double> =
+            fresh ?: prev(name) ?: (0.0 to 0.0)
+
         val body = httpGet(TGJU, jsonAccept = true)
         val root = gson.fromJson(body, JsonObject::class.java)
         val current = root.getAsJsonObject("current")
@@ -57,13 +68,13 @@ object PriceClient {
         val sekeeChg = change("sekee")
 
         // بیت‌کوین، اتریوم، انس طلا، انس نقره، انس مس، S&P 500، Nasdaq: یاهو فایننس
-        val (btc, btcChg) = fetchYahooQuote("BTC-USD")
-        val (eth, ethChg) = fetchYahooQuote("ETH-USD")
-        val (ons, onsChg) = fetchYahooQuote("PAXG-USD")
-        val (silverOns, silverChg) = fetchYahooQuote("SI=F")
-        val (copperOns, copperChg) = fetchYahooQuote("HG=F")
-        val (snp500, snp500Chg) = fetchYahooQuote("^GSPC")
-        val (nasdaq, nasdaqChg) = fetchYahooQuote("^IXIC")
+        val (btc, btcChg) = freshOrPrevious("بیت‌کوین", fetchYahooQuote("BTC-USD"))
+        val (eth, ethChg) = freshOrPrevious("اتریوم", fetchYahooQuote("ETH-USD"))
+        val (ons, onsChg) = freshOrPrevious("انس طلا", fetchYahooQuote("PAXG-USD"))
+        val (silverOns, silverChg) = freshOrPrevious("انس نقره", fetchYahooQuote("SI=F"))
+        val (copperOns, copperChg) = freshOrPrevious("انس مس", fetchYahooQuote("HG=F"))
+        val (snp500, snp500Chg) = freshOrPrevious("S&P 500", fetchYahooQuote("^GSPC"))
+        val (nasdaq, nasdaqChg) = freshOrPrevious("Nasdaq", fetchYahooQuote("^IXIC"))
 
         // طلای بدون حباب = انس طلا × دلار آمریکا ÷ 41.45
         val fairGold18 = if (ons > 0 && dollarToman > 0) ons * dollarToman / 41.45 else 0.0
@@ -72,13 +83,23 @@ object PriceClient {
             ((1.0 + onsChg / 100.0) * (1.0 + dollarChg / 100.0) - 1.0) * 100.0
         } else 0.0
 
-        // شاخص بورس / دلار: TSETMC ÷ قیمت دلار
-        val (bourse, bourseChg) = fetchTsetmcIndex()
-        val indexPerDollar = if (dollarToman > 0) bourse / dollarToman else 0.0
+        // شاخص بورس / دلار: TSETMC ÷ قیمت دلار — در صورت اختلال TSETMC، نسبت قبلی حفظ می‌شود
+        val tsetmcIndex = fetchTsetmcIndex()
+        val indexPerDollar: Double
+        val bourseChg: Double
+        if (tsetmcIndex != null) {
+            val (bourse, chg) = tsetmcIndex
+            indexPerDollar = if (dollarToman > 0) bourse / dollarToman else 0.0
+            bourseChg = chg
+        } else {
+            val prevRatio = prev("شاخص بورس / دلار")
+            indexPerDollar = prevRatio?.first ?: 0.0
+            bourseChg = prevRatio?.second ?: 0.0
+        }
 
-        // سهم موج و صندوق گنج: TSETMC
-        val mowj = fetchTsetmcClosingPrice(TSETMC_MOWJ)
-        val ganj = fetchTsetmcClosingPrice(TSETMC_GANJ)
+        // سهم موج و صندوق گنج: TSETMC — در صورت اختلال سرویس، مقدار قبلی حفظ می‌شود
+        val mowj = freshOrPrevious("سهم موج", fetchTsetmcClosingPrice(TSETMC_MOWJ))
+        val ganj = freshOrPrevious("صندوق گنج", fetchTsetmcClosingPrice(TSETMC_GANJ))
 
         val items = listOf(
             MarketItem("دلار آمریکا", dollarToman, dollarChg, "تومان"),
@@ -104,24 +125,24 @@ object PriceClient {
 
     // ---------- یاهو فایننس (بیت‌کوین، اتریوم، انس طلا/نقره/مس، S&P 500، Nasdaq) ----------
 
-    private fun fetchYahooQuote(symbol: String): Pair<Double, Double> {
+    private fun fetchYahooQuote(symbol: String): Pair<Double, Double>? {
         return try {
             val url = YAHOO_CHART + symbol.replace("^", "%5E")
             val body = httpGet(url, jsonAccept = true)
             val root = gson.fromJson(body, JsonObject::class.java)
             val result = root.getAsJsonObject("chart")
                 ?.getAsJsonArray("result")
-                ?.firstOrNull { it.isJsonObject }?.asJsonObject ?: return 0.0 to 0.0
-            val meta = result.getAsJsonObject("meta") ?: return 0.0 to 0.0
+                ?.firstOrNull { it.isJsonObject }?.asJsonObject ?: return null
+            val meta = result.getAsJsonObject("meta") ?: return null
             val last = meta.get("regularMarketPrice")?.takeIf { !it.isJsonNull }?.asDouble
-                ?: return 0.0 to 0.0
+                ?: return null
             val prevClose = meta.get("previousClose")?.takeIf { !it.isJsonNull }?.asDouble
                 ?: meta.get("chartPreviousClose")?.takeIf { !it.isJsonNull }?.asDouble
                 ?: last
             val chg = if (prevClose > 0) (last - prevClose) / prevClose * 100.0 else 0.0
             last to chg
         } catch (_: Exception) {
-            0.0 to 0.0
+            null
         }
     }
 
@@ -137,39 +158,39 @@ object PriceClient {
      * می‌شود؛ در صورت نبودنش (مثلاً تغییر insCode)، بر اساس نام lVal30 هم جست‌وجو می‌شود.
      * xDrNivJIdx004 = مقدار لحظه‌ای شاخص، xVarIdxJRfV = درصد تغییر نسبت به روز قبل.
      */
-    private fun fetchTsetmcIndex(): Pair<Double, Double> {
+    private fun fetchTsetmcIndex(): Pair<Double, Double>? {
         return try {
             val body = httpGet(TSETMC_INDEX, jsonAccept = true)
             val root = gson.fromJson(body, JsonObject::class.java)
-            val list = root.getAsJsonArray("indexB1") ?: return 0.0 to 0.0
+            val list = root.getAsJsonArray("indexB1") ?: return null
 
             val total = list.firstOrNull {
                 it.isJsonObject && it.asJsonObject.get("insCode")?.asString == TSETMC_TOTAL_INDEX_INS_CODE
             }?.asJsonObject ?: list.firstOrNull {
                 it.isJsonObject && it.asJsonObject.get("lVal30")?.asString?.trim() == TSETMC_TOTAL_INDEX_NAME
-            }?.asJsonObject ?: return 0.0 to 0.0
+            }?.asJsonObject ?: return null
 
-            val value = total.get("xDrNivJIdx004")?.takeIf { !it.isJsonNull }?.asDouble ?: 0.0
+            val value = total.get("xDrNivJIdx004")?.takeIf { !it.isJsonNull }?.asDouble ?: return null
             val changePercent = total.get("xVarIdxJRfV")?.takeIf { !it.isJsonNull }?.asDouble ?: 0.0
             value to changePercent
         } catch (_: Exception) {
-            0.0 to 0.0
+            null
         }
     }
 
     /** GetClosingPriceInfo: pClosing = قیمت پایانی، priceYesterday = قیمت پایانی روز قبل. */
-    private fun fetchTsetmcClosingPrice(url: String): Pair<Double, Double> {
+    private fun fetchTsetmcClosingPrice(url: String): Pair<Double, Double>? {
         return try {
             val body = httpGet(url, jsonAccept = true)
             val root = gson.fromJson(body, JsonElement::class.java)
-            val pClosing = findFirstDouble(root, "pClosing") ?: return 0.0 to 0.0
+            val pClosing = findFirstDouble(root, "pClosing") ?: return null
             val priceYesterday = findFirstDouble(root, "priceYesterday")
             val chg = if (priceYesterday != null && priceYesterday > 0) {
                 (pClosing - priceYesterday) / priceYesterday * 100.0
             } else 0.0
             pClosing to chg
         } catch (_: Exception) {
-            0.0 to 0.0
+            null
         }
     }
 
