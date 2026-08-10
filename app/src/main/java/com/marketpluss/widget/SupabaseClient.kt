@@ -32,8 +32,8 @@ import java.util.TimeZone
  * تا وقتی پر نشده باشند، این کلاس کاری انجام نمی‌دهد (خطایی هم تولید نمی‌کند).
  */
 object SupabaseClient {
-    private const val SUPABASE_URL = "https://YOUR-PROJECT.supabase.co"
-    private const val SUPABASE_ANON_KEY = "YOUR-ANON-KEY"
+    private const val SUPABASE_URL = "https://qlpdrrbeyvejhjrrnihp.supabase.co"
+    private const val SUPABASE_ANON_KEY = "sb_publishable_gOE9-0Z2BJ_EfhcYeS6mMA_nt1pB2Ed"
     private const val TABLE = "market_daily_prices"
 
     private val gson = Gson()
