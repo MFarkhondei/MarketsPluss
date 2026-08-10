@@ -100,6 +100,7 @@ object WidgetRenderer {
             val snap = PriceClient.fetchSnapshot()
             Prefs.saveCache(ctx, gson.toJson(snap))
             apply(ctx, snap, offline = false)
+            SupabaseClient.saveDailyIfNeeded(ctx, snap)
             true
         } catch (e: Exception) {
             val cached = Prefs.getCache(ctx)
