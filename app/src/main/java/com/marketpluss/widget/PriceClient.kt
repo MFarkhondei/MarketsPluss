@@ -15,9 +15,9 @@ import java.util.TimeZone
 
 /**
  * منابع قیمت:
- * - دلار آمریکا، طلای ۱۸ عیار، سکه امامی: TGJU
+ * - دلار آمریکا (در واقع قیمت تتر/USDT)، طلای ۱۸ عیار، سکه امامی: TGJU
  * - بیت‌کوین، اتریوم، انس طلا، انس نقره، انس مس، S&P 500، Nasdaq: یاهو فایننس (Yahoo Finance Chart API)
- * - طلای بدون حباب: انس طلا × دلار آمریکا ÷ 41.45
+ * - طلای بدون حباب: انس طلا × قیمت آیتم «دلار آمریکا» (تتر) ÷ 41.45
  * - شاخص بورس / دلار، سهم موج، صندوق گنج: TSETMC
  */
 object PriceClient {
@@ -57,9 +57,10 @@ object PriceClient {
         fun change(key: String): Double =
             node(key)?.get("dp")?.asDouble ?: 0.0
 
-        // دلار آمریکا: TGJU (قیمت خام به ریال است؛ ÷10 برای تبدیل به تومان)
-        val dollarToman = price("price_dollar_rl") / 10.0
-        val dollarChg = change("price_dollar_rl")
+        // دلار آمریکا: به‌جای نرخ دلار، قیمت تتر از TGJU نمایش داده می‌شود (قیمت خام به ریال است؛ ÷10 برای تبدیل به تومان)
+        // عنوان آیتم همچنان «دلار آمریکا» باقی می‌ماند.
+        val dollarToman = price("crypto-tether-irr") / 10.0
+        val dollarChg = change("crypto-tether-irr")
 
         // طلای ۱۸ عیار و سکه امامی: TGJU
         val gold18Toman = price("geram18") / 10.0
