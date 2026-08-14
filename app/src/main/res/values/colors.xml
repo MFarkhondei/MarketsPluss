@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="bg_dark">#D90A0F1A</color>
+    <color name="ic_launcher_background">#FF05274D</color>
     <color name="card_bg">#B3141C2C</color>
     <color name="card_bg_alt">#B31A2438</color>
     <color name="accent_gold">#F5C542</color>
