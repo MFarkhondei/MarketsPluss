@@ -179,17 +179,17 @@ object PriceClient {
         }
     }
 
-    /** GetClosingPriceInfo: pClosing = قیمت پایانی، priceYesterday = قیمت پایانی روز قبل. */
+    /** GetClosingPriceInfo: pDrCotVal = آخرین قیمت معامله، priceYesterday = قیمت پایانی روز قبل. */
     private fun fetchTsetmcClosingPrice(url: String): Pair<Double, Double>? {
         return try {
             val body = httpGet(url, jsonAccept = true)
             val root = gson.fromJson(body, JsonElement::class.java)
-            val pClosing = findFirstDouble(root, "pClosing") ?: return null
+            val pDrCotVal = findFirstDouble(root, "pDrCotVal") ?: return null
             val priceYesterday = findFirstDouble(root, "priceYesterday")
             val chg = if (priceYesterday != null && priceYesterday > 0) {
-                (pClosing - priceYesterday) / priceYesterday * 100.0
+                (pDrCotVal - priceYesterday) / priceYesterday * 100.0
             } else 0.0
-            pClosing to chg
+            pDrCotVal to chg
         } catch (_: Exception) {
             null
         }
