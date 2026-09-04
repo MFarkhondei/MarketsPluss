@@ -36,6 +36,11 @@
             android:excludeFromRecents="true"
             android:taskAffinity="" />
 
+        <activity
+            android:name=".ChartActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MarketPluss" />
+
         <receiver
             android:name=".MarketWidgetProvider"
             android:exported="true"

@@ -153,7 +153,7 @@ object WidgetRenderer {
                 items.forEachIndexed { i, item ->
                     val slot = boxSlots[i]
                     views.setViewVisibility(slot.card, View.VISIBLE)
-                    bindBoxRow(app, views, slot, item, fs)
+                    bindBoxRow(app, views, slot, item, fs, id, i)
                 }
                 for (i in items.size until ROW_COUNT) {
                     views.setViewVisibility(boxSlots[i].card, View.GONE)
@@ -224,7 +224,15 @@ object WidgetRenderer {
         views.setInt(slot.badge, "setBackgroundResource", badgeRes)
     }
 
-    private fun bindBoxRow(ctx: Context, views: RemoteViews, slot: BoxSlot, item: MarketItem, fs: FontSizes) {
+    private fun bindBoxRow(
+        ctx: Context,
+        views: RemoteViews,
+        slot: BoxSlot,
+        item: MarketItem,
+        fs: FontSizes,
+        widgetId: Int,
+        itemIndex: Int
+    ) {
         val positive = item.changePercent > 0
         val neutral = item.changePercent == 0.0
         val pctColor = when {
@@ -275,6 +283,18 @@ object WidgetRenderer {
             else -> R.drawable.bg_badge_neg
         }
         views.setInt(slot.badge, "setBackgroundResource", badgeRes)
+
+        val chartIntent = Intent(ctx, ChartActivity::class.java).apply {
+            putExtra(ChartActivity.EXTRA_MARKET_NAME, item.name)
+            putExtra(ChartActivity.EXTRA_CURRENT_VALUE, item.value)
+        }
+        val chartPendingIntent = PendingIntent.getActivity(
+            ctx,
+            20000 + widgetId * 100 + itemIndex,
+            chartIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(slot.card, chartPendingIntent)
     }
 
     private fun changeAndRsiText(item: MarketItem, arrow: String): String {

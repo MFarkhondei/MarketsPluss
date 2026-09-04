@@ -35,6 +35,8 @@ import java.util.TimeZone
  * سپس SUPABASE_URL و SUPABASE_ANON_KEY را از Project Settings → API پر کنید.
  * تا وقتی پر نشده باشند، این کلاس کاری انجام نمی‌دهد (خطایی هم تولید نمی‌کند).
  */
+data class DailyPrice(val date: String, val value: Double)
+
 object SupabaseClient {
     private const val SUPABASE_URL = "https://qlpdrrbeyvejhjrrnihp.supabase.co"
     private const val SUPABASE_ANON_KEY = "sb_publishable_gOE9-0Z2BJ_EfhcYeS6mMA_nt1pB2Ed"
@@ -110,6 +112,11 @@ object SupabaseClient {
             conn.disconnect()
         }
     }
+
+    fun fetchDailyPrices(name: String): List<DailyPrice> =
+        fetchDailyHistory()[name].orEmpty()
+            .toSortedMap()
+            .map { (date, value) -> DailyPrice(date, value) }
 
     internal fun calculateRsi14(closes: List<Double>): Double? {
         if (closes.size < RSI_PERIOD + 1) return null
@@ -199,7 +206,7 @@ object SupabaseClient {
         }
     }
 
-    private fun todayTehran(): String {
+    internal fun todayTehran(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         sdf.timeZone = TimeZone.getTimeZone("Asia/Tehran")
         return sdf.format(Date())
