@@ -7,8 +7,8 @@
     android:minResizeWidth="180dp"
     android:minResizeHeight="180dp"
     android:maxResizeHeight="720dp"
-    android:updatePeriodMillis="1800000"
-    android:initialLayout="@layout/widget_layout"
+    android:updatePeriodMillis="900000"
+    android:initialLayout="@layout/widget_layout_box"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:description="@string/widget_description" />

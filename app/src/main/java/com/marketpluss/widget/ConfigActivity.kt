@@ -28,7 +28,7 @@ class ConfigActivity : AppCompatActivity() {
         spinnerInterval.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, intervalLabels)
         val curInterval = Prefs.getIntervalMin(this)
-        val intervalIdx = Prefs.INTERVAL_OPTIONS.indexOf(curInterval).let { if (it >= 0) it else 1 }
+        val intervalIdx = Prefs.INTERVAL_OPTIONS.indexOf(curInterval).let { if (it >= 0) it else 0 }
         spinnerInterval.setSelection(intervalIdx)
 
         val fontLabels = resources.getStringArray(R.array.font_size_labels)
@@ -42,7 +42,7 @@ class ConfigActivity : AppCompatActivity() {
         spinnerViewMode.setSelection(Prefs.getViewMode(this))
 
         btnSave.setOnClickListener {
-            val interval = Prefs.INTERVAL_OPTIONS.getOrElse(spinnerInterval.selectedItemPosition) { 30 }
+            val interval = Prefs.INTERVAL_OPTIONS.getOrElse(spinnerInterval.selectedItemPosition) { 15 }
             val fontSp = Prefs.FONT_OPTIONS.getOrElse(spinnerFont.selectedItemPosition) {
                 Prefs.FONT_DEFAULT
             }

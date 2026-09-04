@@ -11,8 +11,8 @@ android {
         applicationId = "com.marketpluss.widget"
         minSdk = 26
         targetSdk = 34
-        versionCode = 18
-        versionName = "1.5.12"
+        versionCode = 19
+        versionName = "1.5.13"
     }
 
     buildTypes {

@@ -24,7 +24,7 @@ object Prefs {
     private fun p(ctx: Context) =
         ctx.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
-    fun getIntervalMin(ctx: Context): Int = p(ctx).getInt(KEY_INTERVAL, 30)
+    fun getIntervalMin(ctx: Context): Int = p(ctx).getInt(KEY_INTERVAL, 15)
 
     fun setIntervalMin(ctx: Context, min: Int) {
         p(ctx).edit().putInt(KEY_INTERVAL, min).apply()
@@ -43,7 +43,7 @@ object Prefs {
         return if (idx >= 0) idx else 1
     }
 
-    fun getViewMode(ctx: Context): Int = p(ctx).getInt(KEY_VIEW_MODE, VIEW_MODE_LIST)
+    fun getViewMode(ctx: Context): Int = p(ctx).getInt(KEY_VIEW_MODE, VIEW_MODE_BOX)
 
     fun setViewMode(ctx: Context, mode: Int) {
         p(ctx).edit().putInt(KEY_VIEW_MODE, mode).apply()

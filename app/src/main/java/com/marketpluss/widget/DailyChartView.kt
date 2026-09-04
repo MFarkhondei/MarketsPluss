@@ -222,17 +222,13 @@ class DailyChartView @JvmOverloads constructor(
                     val y = bottom - ((item.value - low) / scale).toFloat() * chartHeight
                     x to y
                 }
+                // Selection is column-based: the user's vertical position is
+                // irrelevant; choose the closest point by its X coordinate.
                 val nearest = points.indices.minByOrNull { index ->
-                    val dx = points[index].first - event.x
-                    val dy = points[index].second - event.y
-                    dx * dx + dy * dy
+                    kotlin.math.abs(points[index].first - event.x)
                 } ?: return true
-                val point = points[nearest]
-                val distance = kotlin.math.sqrt(
-                    (point.first - event.x) * (point.first - event.x) +
-                        (point.second - event.y) * (point.second - event.y)
-                )
-                if (distance <= dp(36f)) {
+                val horizontalDistance = kotlin.math.abs(points[nearest].first - event.x)
+                if (horizontalDistance <= max(dp(36f), chartWidth / max(1, points.size - 1) / 2f)) {
                     selectedIndex = nearest
                     invalidate()
                     pointClickListener?.invoke(values[nearest])
