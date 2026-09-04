@@ -2,6 +2,7 @@ package com.marketpluss.widget
 
 import android.os.Bundle
 import android.widget.TextView
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class ChartActivity : AppCompatActivity() {
     private lateinit var minValue: TextView
     private lateinit var maxValue: TextView
     private lateinit var currentValue: TextView
+    private lateinit var selectedPoint: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +33,12 @@ class ChartActivity : AppCompatActivity() {
         minValue = findViewById(R.id.tv_min_value)
         maxValue = findViewById(R.id.tv_max_value)
         currentValue = findViewById(R.id.tv_current_value)
+        selectedPoint = findViewById(R.id.tv_selected_point)
         findViewById<TextView>(R.id.btn_chart_back).setOnClickListener { finish() }
+        chart.setOnPointClickListener { point ->
+            selectedPoint.visibility = View.VISIBLE
+            selectedPoint.text = "${PersianDateUtils.format(point.date)}  ·  مبلغ: ${formatValue(point.value)}"
+        }
 
         if (name.isBlank()) {
             status.text = "ارز نامعتبر است"

@@ -61,7 +61,9 @@
         <com.marketpluss.widget.DailyChartView
             android:id="@+id/daily_chart"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <LinearLayout
@@ -100,6 +102,16 @@
             android:textColor="@color/negative"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_selected_point"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:textColor="@color/accent_gold"
+        android:textSize="12sp"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/tv_chart_status"
