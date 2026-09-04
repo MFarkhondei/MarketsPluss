@@ -44,7 +44,7 @@ object SupabaseClient {
 
     private const val TAG = "SupabaseClient"
     private const val RSI_PERIOD = 14
-    private const val HISTORY_LIMIT = 1000
+    private const val HISTORY_LIMIT = 5000
 
     private fun isConfigured(): Boolean =
         !SUPABASE_URL.contains("YOUR-PROJECT") && !SUPABASE_ANON_KEY.contains("YOUR-ANON-KEY")
@@ -64,7 +64,7 @@ object SupabaseClient {
             val items = snap.items.map { item ->
                 val dailyValues = history[item.name].orEmpty().toMutableMap()
                 if (item.value > 0.0) dailyValues[today] = item.value
-                val closes = dailyValues.toSortedMap().values.filter { it > 0.0 }.takeLast(RSI_PERIOD + 1)
+                val closes = dailyValues.toSortedMap().values.filter { it > 0.0 }
                 item.copy(rsi14 = calculateRsi14(closes) ?: previousRsi[item.name])
             }
             snap.copy(items = items)
@@ -113,16 +113,28 @@ object SupabaseClient {
 
     internal fun calculateRsi14(closes: List<Double>): Double? {
         if (closes.size < RSI_PERIOD + 1) return null
-        var gains = 0.0
-        var losses = 0.0
-        for (i in 1 until closes.size) {
+        var gainSum = 0.0
+        var lossSum = 0.0
+        for (i in 1..RSI_PERIOD) {
             val change = closes[i] - closes[i - 1]
-            if (change > 0.0) gains += change else losses -= change
+            if (change > 0.0) gainSum += change else lossSum -= change
         }
-        if (gains == 0.0 && losses == 0.0) return 50.0
-        if (losses == 0.0) return 100.0
-        if (gains == 0.0) return 0.0
-        val relativeStrength = (gains / RSI_PERIOD) / (losses / RSI_PERIOD)
+
+        // RSI استاندارد Wilder: میانگین اولیه از ۱۴ تغییر و سپس هموارسازی بازگشتی
+        var averageGain = gainSum / RSI_PERIOD
+        var averageLoss = lossSum / RSI_PERIOD
+        for (i in (RSI_PERIOD + 1) until closes.size) {
+            val change = closes[i] - closes[i - 1]
+            val gain = if (change > 0.0) change else 0.0
+            val loss = if (change < 0.0) -change else 0.0
+            averageGain = ((averageGain * (RSI_PERIOD - 1)) + gain) / RSI_PERIOD
+            averageLoss = ((averageLoss * (RSI_PERIOD - 1)) + loss) / RSI_PERIOD
+        }
+
+        if (averageGain == 0.0 && averageLoss == 0.0) return 50.0
+        if (averageLoss == 0.0) return 100.0
+        if (averageGain == 0.0) return 0.0
+        val relativeStrength = averageGain / averageLoss
         return 100.0 - (100.0 / (1.0 + relativeStrength))
     }
 

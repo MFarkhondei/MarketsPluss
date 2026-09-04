@@ -278,7 +278,7 @@ object WidgetRenderer {
     }
 
     private fun changeAndRsiText(item: MarketItem, arrow: String): String {
-        val rsi = item.rsi14?.let { String.format(Locale.US, "%.1f", it) } ?: "—"
+        val rsi = item.rsi14?.let { String.format(Locale.US, "%.0f", it) } ?: "—"
         return NumberUtils.formatChange(item.changePercent) + arrow + "\nRSI: " + rsi
     }
 
