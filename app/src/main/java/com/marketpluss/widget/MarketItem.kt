@@ -5,7 +5,8 @@ data class MarketItem(
     val value: Double,
     val changePercent: Double,
     val unit: String,
-    val formatDecimals: Int = 0
+    val formatDecimals: Int = 0,
+    val rsi14: Double? = null
 )
 
 data class MarketSnapshot(

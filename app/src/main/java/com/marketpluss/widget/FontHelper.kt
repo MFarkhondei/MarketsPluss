@@ -81,24 +81,24 @@ object FontHelper {
             textAlign = Paint.Align.LEFT
         }
 
-        var drawText = text.ifEmpty { " " }
-        var textWidth = paint.measureText(drawText)
-
-        if (maxWidthDp != null) {
-            val maxPx = maxWidthDp * density
-            if (textWidth > maxPx) {
+        val maxPx = maxWidthDp?.times(density)
+        val drawLines = text.ifEmpty { " " }.split('\n').map { sourceLine ->
+            var line = sourceLine.ifEmpty { " " }
+            if (maxPx != null && paint.measureText(line) > maxPx) {
                 val ellipsis = "…"
-                var end = drawText.length
-                while (end > 0 && paint.measureText(drawText.substring(0, end) + ellipsis) > maxPx) {
+                var end = line.length
+                while (end > 0 && paint.measureText(line.substring(0, end) + ellipsis) > maxPx) {
                     end--
                 }
-                drawText = drawText.substring(0, end) + ellipsis
-                textWidth = paint.measureText(drawText)
+                line = line.substring(0, end) + ellipsis
             }
+            line
         }
+        val textWidth = drawLines.maxOf { paint.measureText(it) }
 
         val fm = paint.fontMetrics
-        val height = max(1, ceil(fm.bottom - fm.top).toInt())
+        val lineHeight = max(1, ceil(fm.bottom - fm.top).toInt())
+        val height = lineHeight * drawLines.size
         val width = if (fixedWidth && maxWidthDp != null) {
             max(1, ceil(maxWidthDp * density).toInt())
         } else {
@@ -118,7 +118,9 @@ object FontHelper {
             Align.CENTER -> Paint.Align.CENTER
             Align.END -> Paint.Align.RIGHT
         }
-        canvas.drawText(drawText, x, -fm.top, paint)
+        drawLines.forEachIndexed { index, line ->
+            canvas.drawText(line, x, -fm.top + index * lineHeight, paint)
+        }
         return bmp
     }
 }

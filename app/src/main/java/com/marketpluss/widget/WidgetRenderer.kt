@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 import com.google.gson.Gson
+import java.util.Locale
 
 object WidgetRenderer {
     private val gson = Gson()
@@ -100,7 +101,8 @@ object WidgetRenderer {
             val previous = Prefs.getCache(ctx)?.let {
                 try { gson.fromJson(it, MarketSnapshot::class.java) } catch (_: Exception) { null }
             }
-            val snap = PriceClient.fetchSnapshot(previous)
+            val current = PriceClient.fetchSnapshot(previous)
+            val snap = SupabaseClient.attachRsi14(current, previous)
             Prefs.saveCache(ctx, gson.toJson(snap))
             apply(ctx, snap, offline = false)
             SupabaseClient.saveDailyIfNeeded(ctx, snap)
@@ -209,7 +211,7 @@ object WidgetRenderer {
         }
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
-            NumberUtils.formatChange(item.changePercent) + arrow,
+            changeAndRsiText(item, arrow),
             fs.table, pctColor, bold = true, align = FontHelper.Align.CENTER,
             maxWidthDp = 80f
         )
@@ -263,7 +265,7 @@ object WidgetRenderer {
         }
         FontHelper.setTextBitmap(
             views, ctx, slot.pct,
-            NumberUtils.formatChange(item.changePercent) + arrow,
+            changeAndRsiText(item, arrow),
             pctSize, pctColor, bold = true
         )
 
@@ -273,6 +275,11 @@ object WidgetRenderer {
             else -> R.drawable.bg_badge_neg
         }
         views.setInt(slot.badge, "setBackgroundResource", badgeRes)
+    }
+
+    private fun changeAndRsiText(item: MarketItem, arrow: String): String {
+        val rsi = item.rsi14?.let { String.format(Locale.US, "%.1f", it) } ?: "—"
+        return NumberUtils.formatChange(item.changePercent) + arrow + "\nRSI14: " + rsi
     }
 
     private fun showError(ctx: Context, msg: String) {
