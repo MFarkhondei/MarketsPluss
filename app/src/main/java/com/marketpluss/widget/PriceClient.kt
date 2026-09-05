@@ -67,11 +67,11 @@ object PriceClient {
             return if (value > 0.0) value / 10.0 to change(key) else null
         }
 
-        // کلیدهای قدیمی geram18 و sekee در ajax.json با تأخیر به‌روز می‌شوند.
-        // طلای ۱۸ عیار از کلید لحظه‌ای جدید و سکه از صفحه لحظه‌ای خودش خوانده می‌شود.
+        // نرخ لحظه‌ای طلای ۱۸ عیار و سکه از صفحه رسمی هر بازار خوانده می‌شود.
+        // tgju_gold_irg18 ابزار متفاوتی است و نرخ طلای ۱۸ عیار بازار عمومی نیست.
         val (gold18Toman, gold18Chg) = freshOrPrevious(
             "طلا ۱۸ عیار",
-            tgjuQuote("tgju_gold_irg18") ?: tgjuQuote("geram18")
+            fetchTgjuProfileQuote("geram18") ?: tgjuQuote("geram18")
         )
         val (sekeeToman, sekeeChg) = freshOrPrevious(
             "سکه امامی",
