@@ -17,7 +17,7 @@ object NumberUtils {
 
     fun formatChange(pct: Double): String {
         val sign = if (pct > 0) "+" else ""
-        return String.format(Locale.US, "%s%.2f%%", sign, pct)
+        return sign + DecimalFormat("#,##0.##", symbols).format(pct) + "%"
     }
 
     fun parseNumber(raw: String?): Double {
