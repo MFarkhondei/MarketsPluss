@@ -62,11 +62,21 @@ object PriceClient {
         val dollarToman = price("crypto-tether-irr") / 10.0
         val dollarChg = change("crypto-tether-irr")
 
-        // طلای ۱۸ عیار و سکه امامی: TGJU
-        val gold18Toman = price("geram18") / 10.0
-        val gold18Chg = change("geram18")
-        val sekeeToman = price("sekee") / 10.0
-        val sekeeChg = change("sekee")
+        fun tgjuQuote(key: String): Pair<Double, Double>? {
+            val value = price(key)
+            return if (value > 0.0) value / 10.0 to change(key) else null
+        }
+
+        // کلیدهای قدیمی geram18 و sekee در ajax.json با تأخیر به‌روز می‌شوند.
+        // طلای ۱۸ عیار از کلید لحظه‌ای جدید و سکه از صفحه لحظه‌ای خودش خوانده می‌شود.
+        val (gold18Toman, gold18Chg) = freshOrPrevious(
+            "طلا ۱۸ عیار",
+            tgjuQuote("tgju_gold_irg18") ?: tgjuQuote("geram18")
+        )
+        val (sekeeToman, sekeeChg) = freshOrPrevious(
+            "سکه امامی",
+            fetchTgjuProfileQuote("sekee") ?: tgjuQuote("sekee")
+        )
 
         // بیت‌کوین، اتریوم، انس طلا، انس نقره، انس مس، S&P 500، Nasdaq: یاهو فایننس
         val (btc, btcChg) = freshOrPrevious("بیت‌کوین", fetchYahooQuote("BTC-USD"))
@@ -142,6 +152,29 @@ object PriceClient {
                 ?: last
             val chg = if (prevClose > 0) (last - prevClose) / prevClose * 100.0 else 0.0
             last to chg
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * صفحه پروفایل TGJU برخلاف کلید قدیمی ajax.json، نرخ لحظه‌ای بازار را در
+     * info.last_trade قرار می‌دهد. مبلغ خام ریال است و برای ویجت به تومان تبدیل می‌شود.
+     */
+    private fun fetchTgjuProfileQuote(slug: String): Pair<Double, Double>? {
+        return try {
+            val body = httpGet("https://www.tgju.org/profile/$slug", jsonAccept = false)
+            val priceText = Regex(
+                """data-col=[\"']info\.last_trade\.PDrCotVal[\"'][^>]*>\s*([^<]+)"""
+            ).find(body)?.groupValues?.get(1) ?: return null
+            val valueRial = NumberUtils.parseNumber(priceText)
+            if (valueRial <= 0.0) return null
+
+            val changeText = Regex(
+                """data-col=[\"']info\.last_trade\.last_change_percentage[\"'][^>]*>[\s\S]{0,300}?class=[\"'][^\"']*change-percentage[^\"']*[\"'][^>]*>\s*([^<]+)"""
+            ).find(body)?.groupValues?.get(1)
+            val changePercent = changeText?.let(NumberUtils::parseNumber) ?: 0.0
+            valueRial / 10.0 to changePercent
         } catch (_: Exception) {
             null
         }
