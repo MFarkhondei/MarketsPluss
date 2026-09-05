@@ -1,6 +1,5 @@
 package com.marketpluss.widget
 
-import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -16,8 +15,8 @@ import java.util.Locale
 import java.util.TimeZone
 
 /**
- * ذخیره‌ی روزانه‌ی قیمت‌ها در Supabase — فقط یک بار در روز (به وقت تهران)،
- * حتی اگر ویجت چند بار در روز آپدیت شود.
+ * ذخیره‌ی روزانه‌ی قیمت‌ها در Supabase. رکورد امروز در هر بروزرسانی upsert
+ * می‌شود تا پس از پایان روز، آخرین قیمت دریافت‌شده به‌عنوان قیمت پایانی بماند.
  *
  * پیش‌نیاز: این جدول را یک بار در SQL editor پروژه‌ی سوپابیس بسازید:
  *
@@ -52,28 +51,42 @@ object SupabaseClient {
         !SUPABASE_URL.contains("YOUR-PROJECT") && !SUPABASE_ANON_KEY.contains("YOUR-ANON-KEY")
 
     /**
-     * RSI14 هر بازار را از قیمت‌های روزانه‌ی جدول محاسبه می‌کند.
-     * قیمت لحظه‌ای امروز جایگزین رکورد امروز می‌شود؛ بنابراین برای محاسبه دقیق
-     * به ۱۴ قیمت روزانه‌ی قبلی به‌علاوه قیمت فعلی نیاز داریم.
+     * شاخص‌های روزانه را بر پایه تاریخچه Supabase محاسبه می‌کند:
+     * - درصد تغییر نسبت به آخرین قیمت ثبت‌شده در آخرین روز قبل از امروز
+     * - RSI استاندارد Wilder با دوره ۱۴ روزه
      */
-    fun attachRsi14(snap: MarketSnapshot, previous: MarketSnapshot? = null): MarketSnapshot {
-        if (!isConfigured()) return withPreviousRsi(snap, previous)
+    fun attachDailyMetrics(snap: MarketSnapshot, previous: MarketSnapshot? = null): MarketSnapshot {
+        if (!isConfigured()) return withPreviousMetrics(snap, previous)
 
         return try {
             val history = fetchDailyHistory()
             val today = todayTehran()
-            val previousRsi = previous?.items?.associate { it.name to it.rsi14 }.orEmpty()
+            val previousItems = previous?.items?.associateBy { it.name }.orEmpty()
             val items = snap.items.map { item ->
                 val dailyValues = history[item.name].orEmpty().toMutableMap()
+                val previousClose = dailyValues.entries
+                    .filter { it.key < today && it.value > 0.0 }
+                    .maxByOrNull { it.key }
+                    ?.value
                 if (item.value > 0.0) dailyValues[today] = item.value
                 val closes = dailyValues.toSortedMap().values.filter { it > 0.0 }
-                item.copy(rsi14 = calculateRsi14(closes) ?: previousRsi[item.name])
+                item.copy(
+                    changePercent = calculateDailyChange(item.value, previousClose)
+                        ?: previousItems[item.name]?.changePercent
+                        ?: 0.0,
+                    rsi14 = calculateRsi14(closes) ?: previousItems[item.name]?.rsi14
+                )
             }
             snap.copy(items = items)
         } catch (e: Exception) {
-            Log.e(TAG, "خطا در دریافت تاریخچه برای RSI14", e)
-            withPreviousRsi(snap, previous)
+            Log.e(TAG, "خطا در دریافت تاریخچه برای شاخص‌های روزانه", e)
+            withPreviousMetrics(snap, previous)
         }
+    }
+
+    internal fun calculateDailyChange(current: Double, previousClose: Double?): Double? {
+        if (current <= 0.0 || previousClose == null || previousClose <= 0.0) return null
+        return ((current - previousClose) / previousClose) * 100.0
     }
 
     private fun fetchDailyHistory(): Map<String, Map<String, Double>> {
@@ -145,24 +158,24 @@ object SupabaseClient {
         return 100.0 - (100.0 / (1.0 + relativeStrength))
     }
 
-    private fun withPreviousRsi(snap: MarketSnapshot, previous: MarketSnapshot?): MarketSnapshot {
-        val previousRsi = previous?.items?.associate { it.name to it.rsi14 }.orEmpty()
+    private fun withPreviousMetrics(snap: MarketSnapshot, previous: MarketSnapshot?): MarketSnapshot {
+        val previousItems = previous?.items?.associateBy { it.name }.orEmpty()
         return snap.copy(items = snap.items.map { item ->
-            item.copy(rsi14 = item.rsi14 ?: previousRsi[item.name])
+            val cached = previousItems[item.name]
+            item.copy(
+                changePercent = cached?.changePercent ?: item.changePercent,
+                rsi14 = item.rsi14 ?: cached?.rsi14
+            )
         })
     }
 
-    /** اگر امروز (به وقت تهران) هنوز ذخیره نشده، اسنپ‌شات فعلی را در سوپابیس ثبت می‌کند. */
-    fun saveDailyIfNeeded(ctx: Context, snap: MarketSnapshot) {
+    /** رکورد امروز را با آخرین قیمت‌های دریافت‌شده بروزرسانی می‌کند. */
+    fun saveDailySnapshot(snap: MarketSnapshot) {
         if (!isConfigured()) {
             Log.w(TAG, "رد شد: SUPABASE_URL / SUPABASE_ANON_KEY هنوز پر نشده‌اند")
             return
         }
         val today = todayTehran()
-        if (Prefs.getLastDailySaveDate(ctx) == today) {
-            Log.d(TAG, "رد شد: امروز ($today) قبلاً ذخیره شده")
-            return
-        }
 
         try {
             val rows = snap.items.map { item ->
@@ -190,8 +203,7 @@ object SupabaseClient {
                 OutputStreamWriter(conn.outputStream, StandardCharsets.UTF_8).use { it.write(body) }
                 val code = conn.responseCode
                 if (code in 200..299) {
-                    Prefs.setLastDailySaveDate(ctx, today)
-                    Log.d(TAG, "ذخیره شد: $today (${rows.size} ردیف)")
+                    Log.d(TAG, "آخرین قیمت روز بروزرسانی شد: $today (${rows.size} ردیف)")
                 } else {
                     val err = (conn.errorStream ?: conn.inputStream)?.let {
                         BufferedReader(InputStreamReader(it, StandardCharsets.UTF_8)).use { r -> r.readText() }

@@ -9,7 +9,6 @@ object Prefs {
     private const val KEY_CACHE_AT = "cache_at"
     private const val KEY_FONT_SP = "font_size_sp"
     private const val KEY_VIEW_MODE = "view_mode"
-    private const val KEY_LAST_DAILY_SAVE = "last_daily_save_date"
 
     val INTERVAL_OPTIONS = intArrayOf(15, 30, 60, 120, 0)
 
@@ -47,14 +46,6 @@ object Prefs {
 
     fun setViewMode(ctx: Context, mode: Int) {
         p(ctx).edit().putInt(KEY_VIEW_MODE, mode).apply()
-    }
-
-    /** آخرین تاریخی (yyyy-MM-dd به وقت تهران) که قیمت‌ها در سوپابیس ذخیره شدند */
-    fun getLastDailySaveDate(ctx: Context): String? =
-        p(ctx).getString(KEY_LAST_DAILY_SAVE, null)
-
-    fun setLastDailySaveDate(ctx: Context, date: String) {
-        p(ctx).edit().putString(KEY_LAST_DAILY_SAVE, date).apply()
     }
 
     fun saveCache(ctx: Context, json: String) {
