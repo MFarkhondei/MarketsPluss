@@ -43,13 +43,17 @@ object PriceClient {
         fun freshOrPrevious(name: String, fresh: Pair<Double, Double>?): Pair<Double, Double> =
             fresh ?: prev(name) ?: (0.0 to 0.0)
 
-        val body = httpGet(TGJU, jsonAccept = true)
-        val root = gson.fromJson(body, JsonObject::class.java)
-        val current = root.getAsJsonObject("current")
-            ?: throw Exception("داده قیمت خالی است")
+        // TGJU may be unreachable on some networks. Keep it optional so
+        // Yahoo and TSETMC quotes can still refresh the widget.
+        val current = try {
+            val body = httpGet(TGJU, jsonAccept = true)
+            gson.fromJson(body, JsonObject::class.java)?.getAsJsonObject("current")
+        } catch (_: Exception) {
+            null
+        }
 
         fun node(key: String): JsonObject? =
-            if (current.has(key) && current.get(key).isJsonObject) current.getAsJsonObject(key) else null
+            if (current?.has(key) == true && current.get(key).isJsonObject) current.getAsJsonObject(key) else null
 
         fun price(key: String): Double =
             NumberUtils.parseNumber(node(key)?.get("p")?.asString)
@@ -59,8 +63,9 @@ object PriceClient {
 
         // دلار آمریکا: به‌جای نرخ دلار، قیمت تتر از TGJU نمایش داده می‌شود (قیمت خام به ریال است؛ ÷10 برای تبدیل به تومان)
         // عنوان آیتم همچنان «دلار آمریکا» باقی می‌ماند.
-        val dollarToman = price("crypto-tether-irr") / 10.0
-        val dollarChg = change("crypto-tether-irr")
+        val tetherRial = price("crypto-tether-irr")
+        val dollarToman = if (tetherRial > 0.0) tetherRial / 10.0 else prev("دلار آمریکا")?.first ?: 0.0
+        val dollarChg = if (tetherRial > 0.0) change("crypto-tether-irr") else prev("دلار آمریکا")?.second ?: 0.0
 
         fun tgjuQuote(key: String): Pair<Double, Double>? {
             val value = price(key)
@@ -258,8 +263,8 @@ object PriceClient {
         while (redirects < 5) {
             val conn = (URL(current).openConnection() as HttpURLConnection).apply {
                 instanceFollowRedirects = false
-                connectTimeout = 15000
-                readTimeout = 25000
+                connectTimeout = 8000
+                readTimeout = 10000
                 requestMethod = "GET"
                 setRequestProperty("User-Agent", "Mozilla/5.0 (Android) MarketPluss/1.5")
                 setRequestProperty("Accept", if (jsonAccept) "application/json" else "text/html")
